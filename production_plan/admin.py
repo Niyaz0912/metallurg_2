@@ -1,3 +1,9 @@
 from django.contrib import admin
+from .models import ProductionPlan
 
-# Register your models here.
+
+class ProductionPlanAdmin(admin.ModelAdmin):
+    pass
+
+
+admin.site.register(ProductionPlan, ProductionPlanAdmin)
