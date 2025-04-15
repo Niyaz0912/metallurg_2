@@ -1,23 +1,21 @@
-from django.urls import include, path
 from django.contrib import admin
-from django.views.generic import RedirectView  # Для перенаправления с корня
+from django.urls import path, include
+from django.views.generic import RedirectView
+from users.views import CustomLoginView, CustomLogoutView, RegisterView
 
 urlpatterns = [
-    # Админка
     path('admin/', admin.site.urls),
 
-    # Главная страница (перенаправление на логин или другую стартовую страницу)
-    path('', RedirectView.as_view(url='login/'), name='home'),
+    # Главная страница
+    path('', RedirectView.as_view(pattern_name='login'), name='home'),
 
-    # Приложение users (включает login/, register/, profile/ и т.д.)
-    path('', include('users.urls')),
+    # Аутентификация
+    path('login/', CustomLoginView.as_view(), name='login'),
+    path('logout/', CustomLogoutView.as_view(), name='logout'),
+    path('register/', RegisterView.as_view(), name='register'),
 
-    # Приложение production_plan
-    path('production_plan/', include('production_plan.urls')),
-
-    # Приложение shift_assignment
-    path('shift_assignment/', include('shift_assignment.urls')),
-
-    # Дополнительно: можно добавить страницу 404 для DEBUG=False
-    # handler404 = 'users.views.custom_404_view'
+    # Приложения
+    path('users/', include('users.urls')),
+    path('production_plan/', include('production_plan.urls', namespace='production_plan')),
+    path('shifts/', include('shift_assignment.urls', namespace='shift_assignment')),
 ]
