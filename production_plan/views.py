@@ -1,54 +1,77 @@
 from django.shortcuts import redirect
-from django.contrib.auth.decorators import permission_required
-from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.contrib.auth.decorators import permission_required, login_required
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 from .models import ProductionPlan
 from .forms import ProductionPlanForm
 from django.urls import reverse_lazy
+from django.views.generic import TemplateView
 
 
-class ProductionPlanListView(PermissionRequiredMixin, ListView):
+class DashboardView(TemplateView):
+    template_name = 'dashboard.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.role == 'admin':
+            return redirect('admin:index')
+        elif request.user.role in ['director', 'master']:
+            return redirect('production:list')
+        return redirect('shifts:list')
+
+
+class StaffRequiredMixin(UserPassesTestMixin):
+    """Миксин для проверки ролей admin и director"""
+
+    def test_func(self):
+        return self.request.user.role in ['admin', 'director']
+
+    def handle_no_permission(self):
+        return redirect('production_plan:list')
+
+
+class ProductionPlanListView(LoginRequiredMixin, ListView):
     model = ProductionPlan
     template_name = 'production_plan/list.html'
-    permission_required = 'production_plan.view_productionplan'
-    login_url = '/users/login/'  # Укажите URL вашей страницы входа
+    login_url = '/users/login/'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Список производственных планов'
+        context['can_edit'] = self.request.user.role in ['admin', 'director']
         return context
 
 
-class ProductionPlanCreateView(PermissionRequiredMixin, CreateView):
+class ProductionPlanCreateView(StaffRequiredMixin, CreateView):
     model = ProductionPlan
     form_class = ProductionPlanForm
     template_name = 'production_plan/create.html'
-    permission_required = 'production_plan.add_productionplan'
 
     def form_valid(self, form):
         form.instance.created_by = self.request.user
         return super().form_valid(form)
 
 
-class ProductionPlanUpdateView(PermissionRequiredMixin, UpdateView):
+class ProductionPlanUpdateView(StaffRequiredMixin, UpdateView):
     model = ProductionPlan
     form_class = ProductionPlanForm
     template_name = 'production_plan/update.html'
-    permission_required = 'production_plan.change_productionplan'
 
     def form_valid(self, form):
         form.instance.updated_by = self.request.user
         return super().form_valid(form)
 
 
-class ProductionPlanDeleteView(PermissionRequiredMixin, DeleteView):
+class ProductionPlanDeleteView(StaffRequiredMixin, DeleteView):
     model = ProductionPlan
     template_name = 'production_plan/delete.html'
     success_url = reverse_lazy('production_plan:list')
-    permission_required = 'production_plan.delete_productionplan'
 
 
-class ProductionPlanDetailView(PermissionRequiredMixin, DetailView):
+class ProductionPlanDetailView(LoginRequiredMixin, DetailView):
     model = ProductionPlan
     template_name = 'production_plan/detail.html'
-    permission_required = 'production_plan.view_productionplan'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['can_edit'] = self.request.user.role in ['admin', 'director']
+        return context
