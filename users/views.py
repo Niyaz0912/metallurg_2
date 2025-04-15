@@ -26,7 +26,7 @@ class LoginView(FormView):
 
 
 class LogoutView(View):
-    def get(self, request):
+    def post(self, request):
         logout(request)
         return redirect('users:login')
 
