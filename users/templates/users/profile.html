@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Личный кабинет</h2>
+
+<div class="card mb-3">
+    <div class="card-body">
+        <h5 class="card-title">Задание на смену</h5>
+        {% if shift_task %}
+            <p>{{ shift_task.description }}</p>
+            <form method="post" action="">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-success">Выполнено</button>
+            </form>
+        {% else %}
+            <p>Нет текущих заданий.</p>
+        {% endif %}
+    </div>
+</div>
+
+<a href="{% url 'users:shift_archive' user.pk %}" class="btn btn-secondary">Архив смен</a>
+<a href="{% url 'users:shift_schedule' user.pk %}" class="btn btn-info">График смен</a>
+{% endblock %}

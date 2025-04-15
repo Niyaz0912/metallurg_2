@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Список производственных планов</h1>
+
+<div class="row">
+    {% for plan in object_list %}
+        <div class="col-md-4">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">{{ plan.order }} для {{ plan.customer }}</h5>
+                    <p class="card-text">Изделие: {{ plan.product }}</p>
+                    <p class="card-text">Количество: {{ plan.quantity }}</p>
+                    <p class="card-text">Прогресс: {{ plan.progress }}%</p>
+                    <p class="card-text">Дедлайн: {{ plan.deadline }}</p>
+                    <a href="{% url 'production_plan:detail' plan.pk %}" class="btn btn-primary">Подробнее</a>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+<a href="{% url 'production_plan:create' %}" class="btn btn-success">Создать новый план</a>
+{% endblock %}

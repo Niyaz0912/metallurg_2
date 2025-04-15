@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Архив смен</h2>
+
+{% if shift_archive %}
+    <ul class="list-group">
+        {% for shift in shift_archive %}
+            <li class="list-group-item">
+                {{ shift.date }} — {{ shift.description }}
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>Архив смен пуст.</p>
+{% endif %}
+<a href="{% url 'users:profile' user.pk %}" class="btn btn-primary mt-3">Назад в профиль</a>
+{% endblock %}

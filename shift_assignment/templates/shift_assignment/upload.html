@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Загрузка сменных заданий из файла</h1>
+
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="file" name="file" accept=".xlsx, .xls">
+    <button type="submit" class="btn btn-primary">Загрузить</button>
+</form>
+{% endblock %}

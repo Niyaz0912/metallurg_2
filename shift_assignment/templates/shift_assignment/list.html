@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Список сменных заданий</h1>
+
+<div class="row">
+    {% for assignment in object_list %}
+        <div class="col-md-4">
+            <div class="card mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">{{ assignment.order }} для {{ assignment.customer }}</h5>
+                    <p class="card-text">Оператор: {{ assignment.operator.username }}</p>
+                    <p class="card-text">Деталь: {{ assignment.part }}</p>
+                    <p class="card-text">Количество: {{ assignment.quantity }}</p>
+                    <p class="card-text">Статус: {% if assignment.execution_status %}Выполнено{% else %}Не выполнено{% endif %}</p>
+                    <a href="{% url 'shift_assignment:detail' assignment.pk %}" class="btn btn-primary">Подробнее</a>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+<a href="{% url 'shift_assignment:create' %}" class="btn btn-success">Создать новое задание</a>
+{% endblock %}

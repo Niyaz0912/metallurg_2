@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>График смен</h2>
+
+{% if shift_schedule %}
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Дата</th>
+                <th>Время начала</th>
+                <th>Время окончания</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for shift in shift_schedule %}
+                <tr>
+                    <td>{{ shift.date }}</td>
+                    <td>{{ shift.start_time }}</td>
+                    <td>{{ shift.end_time }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>График смен отсутствует.</p>
+{% endif %}
+<a href="{% url 'users:profile' user.pk %}" class="btn btn-primary mt-3">Назад в профиль</a>
+{% endblock %}
