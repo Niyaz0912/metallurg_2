@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Удалить производственный план</h1>
+
+<p>Вы уверены, что хотите удалить производственный план "{{ object.order }}" для "{{ object.customer }}"?</p>
+
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Удалить</button>
+    <a href="{% url 'production_plan:list' %}" class="btn btn-secondary">Отмена</a>
+</form>
+{% endblock %}

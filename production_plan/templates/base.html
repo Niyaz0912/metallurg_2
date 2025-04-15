@@ -1,0 +1,60 @@
+{% load static %}
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>{{ title }}</title>
+    <link rel="icon" href="{% static 'production_plan/icons/icon.png' %}" type="image/png">
+
+    <!-- Подключение Bootstrap через CDN -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+    <!-- Подключение вашего CSS файла -->
+    <link rel="stylesheet" href="{% static 'production_plan/css/styles.css' %}" type="text/css">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <!-- Подключение вашего JS файла -->
+    <script src="{% static 'production_plan/js/scripts.js' %}"></script>
+</head>
+<body>
+<div class="container mt-5">
+    <header>
+        <h1 class="text-center">Производственный план</h1>
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <a class="navbar-brand float-left" href="{% url 'production_plan:list' %}">Главная</a>
+
+            {% if user.is_authenticated %}
+            <span class="navbar-text mx-3">
+                {{ user.first_name }} {{ user.last_name }}
+            </span>
+            <a class="btn btn-info mx-2" href="{% url 'users:profile' user.pk %}">Профиль</a>
+
+            {% if user.is_superuser %}
+            <a class="btn btn-success mx-2" href="/admin/">Админка</a> {# Кнопка для перехода в админ панель #}
+            {% endif %}
+
+            {% if user.is_authenticated %}
+            <form method="post" action="{% url 'users:logout' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger">Выйти</button>
+            </form>
+            {% else %}
+            <a class="btn btn-success" href="{% url 'users:login' %}">Войти</a>
+            {% endif %}
+
+            {% else %}
+            <a class="btn btn-success float-right" href="{% url 'users:login' %}">Войти</a> {# Кнопка для входа #}
+            {% endif %}
+        </nav>
+    </header>
+
+    {% block content %}
+    {% endblock %}
+</div>
+
+</body>
+</html>
