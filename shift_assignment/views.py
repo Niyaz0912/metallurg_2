@@ -1,77 +1,139 @@
 import pandas as pd
-from django.shortcuts import redirect
-from django.contrib.auth.decorators import permission_required
-from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required  # Добавлен импорт
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
-from .models import ShiftAssignment
-from .forms import ShiftAssignmentForm, UpdateShiftAssignmentForm
 from django.urls import reverse_lazy
 from django.contrib import messages
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+from django.core.exceptions import PermissionDenied
+from django.utils import timezone  # Добавлен импорт
+from .models import ShiftAssignment, ShiftAssignmentArchive
+from .forms import ShiftAssignmentForm, UpdateShiftAssignmentForm
+
+User = get_user_model()
 
 
-class ShiftAssignmentListView(ListView):
+class StaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
+    """Миксин для проверки ролей master и director"""
+
+    def test_func(self):
+        return self.request.user.role in ['master', 'director']
+
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            raise PermissionDenied("У вас нет прав для этого действия")
+        return super().handle_no_permission()
+
+
+class ShiftAssignmentListView(LoginRequiredMixin, ListView):
     model = ShiftAssignment
     template_name = 'shift_assignment/list.html'
+    context_object_name = 'assignments'
+    paginate_by = 20
+
+    def get_queryset(self):
+        return ShiftAssignment.objects.filter(execution_status=False).order_by('-date')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['title'] = 'Список сменных заданий'
+        context['title'] = 'Активные сменные задания'
+        context['can_edit'] = self.request.user.role in ['master', 'director']
         return context
 
 
-class ShiftAssignmentCreateView(PermissionRequiredMixin, CreateView):
+class ShiftAssignmentCreateView(StaffRequiredMixin, CreateView):
     model = ShiftAssignment
     form_class = ShiftAssignmentForm
     template_name = 'shift_assignment/create.html'
-    permission_required = 'shift_assignment.add_shiftassignment'
+    success_url = reverse_lazy('shift_assignment:list')
 
     def form_valid(self, form):
         form.instance.created_by = self.request.user
+        messages.success(self.request, 'Сменное задание успешно создано')
         return super().form_valid(form)
 
 
-class ShiftAssignmentUpdateView(PermissionRequiredMixin, UpdateView):
+class ShiftAssignmentUpdateView(StaffRequiredMixin, UpdateView):
     model = ShiftAssignment
     form_class = UpdateShiftAssignmentForm
     template_name = 'shift_assignment/update.html'
-    permission_required = 'shift_assignment.change_shiftassignment'
 
     def form_valid(self, form):
-        if form.instance.execution_status:
-            # Переместить в архив
-            form.instance.save()
+        if form.instance.execution_status and not form.instance.completed_at:
+            form.instance.completed_at = timezone.now()
+            ShiftAssignmentArchive.objects.create_from_assignment(form.instance)
             messages.success(self.request, 'Задание выполнено и перемещено в архив')
-            return redirect('shift_assignment:archive')
         return super().form_valid(form)
 
+    def get_success_url(self):
+        if self.object.execution_status:
+            return reverse_lazy('shift_assignment:archive')
+        return reverse_lazy('shift_assignment:list')
 
-class ShiftAssignmentDeleteView(PermissionRequiredMixin, DeleteView):
+
+class ShiftAssignmentDeleteView(StaffRequiredMixin, DeleteView):
     model = ShiftAssignment
     template_name = 'shift_assignment/delete.html'
     success_url = reverse_lazy('shift_assignment:list')
-    permission_required = 'shift_assignment.delete_shiftassignment'
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, 'Задание успешно удалено')
+        return super().delete(request, *args, **kwargs)
 
 
-class ShiftAssignmentDetailView(DetailView):
+class ShiftAssignmentDetailView(LoginRequiredMixin, DetailView):
     model = ShiftAssignment
     template_name = 'shift_assignment/detail.html'
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['can_edit'] = self.request.user.role in ['master', 'director']
+        return context
 
-class ShiftAssignmentArchiveView(ListView):
-    model = ShiftAssignment
+
+class ShiftAssignmentArchiveView(LoginRequiredMixin, ListView):
+    model = ShiftAssignmentArchive
     template_name = 'shift_assignment/archive.html'
+    context_object_name = 'archived_shifts'
+    paginate_by = 20
 
     def get_queryset(self):
-        return ShiftAssignment.objects.filter(execution_status=True)
+        return ShiftAssignmentArchive.objects.all().order_by('-completed_at')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Архив выполненных смен'
+        return context
 
 
+@login_required
 def upload_shift_assignments(request):
+    if not request.user.role in ['master', 'director']:
+        raise PermissionDenied("У вас нет прав для загрузки заданий")
+
     if request.method == 'POST':
-        file = request.FILES['file']
-        if file.name.endswith('.xlsx') or file.name.endswith('.xls'):
+        file = request.FILES.get('file')
+        if not file:
+            messages.error(request, 'Файл не выбран')
+            return redirect('shift_assignment:upload')
+
+        if not file.name.endswith(('.xlsx', '.xls')):
+            messages.error(request, 'Поддерживаются только файлы Excel (.xlsx, .xls)')
+            return redirect('shift_assignment:upload')
+
+        try:
             df = pd.read_excel(file)
-            for index, row in df.iterrows():
+            required_columns = ['customer', 'date', 'machine_number', 'operator',
+                                'order', 'part', 'quantity']
+
+            if not all(col in df.columns for col in required_columns):
+                missing = set(required_columns) - set(df.columns)
+                messages.error(request, f'Отсутствуют обязательные колонки: {", ".join(missing)}')
+                return redirect('shift_assignment:upload')
+
+            success_count = 0
+            for _, row in df.iterrows():
                 try:
                     operator = User.objects.get(username=row['operator'])
                     ShiftAssignment.objects.create(
@@ -82,13 +144,20 @@ def upload_shift_assignments(request):
                         order=row['order'],
                         part=row['part'],
                         quantity=row['quantity'],
-                        part_blueprint=None,  # Не загружается из файла
-                        comment=row['comment']
+                        comment=row.get('comment', ''),
+                        created_by=request.user
                     )
+                    success_count += 1
+                except User.DoesNotExist:
+                    messages.warning(request, f'Оператор {row["operator"]} не найден')
                 except Exception as e:
-                    messages.error(request, f'Ошибка при создании задания: {e}')
-            messages.success(request, 'Задания успешно загружены')
+                    messages.warning(request, f'Ошибка в строке {_ + 2}: {str(e)}')
+
+            messages.success(request, f'Успешно загружено {success_count} заданий')
             return redirect('shift_assignment:list')
-        else:
-            messages.error(request, 'Неправильный формат файла')
-    return render(request, 'shift_assignment/upload.html')
+
+        except Exception as e:
+            messages.error(request, f'Ошибка обработки файла: {str(e)}')
+            return redirect('shift_assignment:upload')
+
+    return render(request, 'shift_assignment/upload.html', {'title': 'Загрузка заданий из Excel'})
