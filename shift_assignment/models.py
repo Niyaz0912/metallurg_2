@@ -13,12 +13,12 @@ class ShiftAssignment(models.Model):
         related_name='shifts',
         verbose_name='Оператор'
     )
-    order = models.CharField(max_length=255, verbose_name='Заказ')
-    part = models.CharField(max_length=255, verbose_name='Деталь')
-    quantity = models.IntegerField(verbose_name='Количество')
     part_blueprint = models.FileField(
         upload_to='part_blueprints/',
-        verbose_name='Чертеж детали'
+        verbose_name='Чертеж детали',
+        blank=True,  # Разрешает пустое значение в формах
+        null=True  # Разрешает NULL в базе данных
+
     )
     execution_status = models.BooleanField(
         default=False,
@@ -33,6 +33,8 @@ class ShiftAssignment(models.Model):
         auto_now=True,
         verbose_name='Дата обновления'
     )
+
+    quantity = models.IntegerField()
 
     def __str__(self):
         return f'Сменное задание #{self.id} для {self.operator.username}'
@@ -68,7 +70,9 @@ class ShiftAssignmentArchive(models.Model):
     quantity = models.IntegerField(verbose_name='Количество')
     part_blueprint = models.FileField(
         upload_to='archived_blueprints/',
-        verbose_name='Чертеж детали'
+        verbose_name='Чертеж детали',
+        blank=True,  # Добавлено
+        null=True  # Добавлено
     )
     actual_quantity = models.IntegerField(
         null=True,

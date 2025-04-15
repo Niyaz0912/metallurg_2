@@ -6,20 +6,20 @@ class ShiftAssignmentAdmin(admin.ModelAdmin):
     """Административный интерфейс для модели сменных заданий"""
     list_display = (
         'id', 'customer', 'date', 'machine_number', 'operator',
-        'order', 'part', 'quantity', 'execution_status'
+        'quantity', 'execution_status'
     )
     list_filter = (
         'execution_status', 'date', 'machine_number', 'operator'
     )
     search_fields = (
-        'customer', 'order', 'part', 'operator__username'
+        'customer', 'operator__username'
     )
     readonly_fields = ('created_at', 'updated_at')
     fieldsets = (
         ('Основная информация', {
             'fields': (
                 'customer', 'date', 'machine_number', 'operator',
-                'order', 'part', 'quantity', 'part_blueprint'
+                'quantity', 'part_blueprint'
             )
         }),
         ('Дополнительно', {

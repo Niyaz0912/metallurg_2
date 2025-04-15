@@ -13,7 +13,9 @@ class StyleFormMixin:
 class ShiftAssignmentForm(StyleFormMixin, forms.ModelForm):
     class Meta:
         model = ShiftAssignment
-        fields = ['customer', 'date', 'machine_number', 'operator', 'order', 'part', 'quantity', 'part_blueprint', 'comment']
+        fields = ['customer', 'date', 'machine_number', 'operator',
+                 'part_blueprint', 'execution_status', 'comment']
+        # Только существующие поля модели
 
 
 class UpdateShiftAssignmentForm(StyleFormMixin, forms.ModelForm):
