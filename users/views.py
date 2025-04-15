@@ -1,48 +1,31 @@
-from django.shortcuts import redirect
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth import authenticate, login, logout
-from django.contrib import messages
-from django.views.generic import View, TemplateView, FormView, DetailView
-from .forms import LoginForm, RegistrationForm
-from .models import User
+from django.contrib.auth.views import LoginView, LogoutView
+from django.contrib.auth.forms import UserCreationForm
+from django.views.generic import CreateView, DetailView
 from django.urls import reverse_lazy
+from users.models import User
 
 
-class LoginView(FormView):
-    template_name = 'users/login.html'
-    form_class = LoginForm
-    success_url = reverse_lazy('users:profile')
+class CustomLoginView(LoginView):
+    template_name = 'users/login.html'  # Ваш шаблон
+    redirect_authenticated_user = True
 
-    def form_valid(self, form):
-        username = form.cleaned_data.get('username')
-        password = form.cleaned_data.get('password')
-        user = authenticate(username=username, password=password)
-        if user is not None:
-            login(self.request, user)
-            return redirect('users:profile', pk=user.pk)
-        else:
-            messages.error(self.request, 'Неправильное имя пользователя или пароль')
-            return super().form_invalid(form)
+    def get_success_url(self):
+        if self.request.user.role == 'admin':
+            return reverse_lazy('admin:index')
+        elif self.request.user.role in ['director', 'master']:
+            return reverse_lazy('production_plan:list')
+        return reverse_lazy('shifts:list')
 
 
-class LogoutView(View):
-    def post(self, request):
-        logout(request)
-        return redirect('users:login')
+class CustomLogoutView(LogoutView):
+    template_name = 'users/logout.html'  # Ваш шаблон
+    next_page = 'login'
 
 
-class RegisterView(FormView):
-    template_name = 'users/register.html'
-    form_class = RegistrationForm
-    success_url = reverse_lazy('users:login')
-
-    def form_valid(self, form):
-        user = form.save()
-        username = form.cleaned_data.get('username')
-        raw_password = form.cleaned_data.get('password1')
-        user = authenticate(username=username, password=raw_password)
-        login(self.request, user)
-        return redirect('users:profile', pk=user.pk)
+class RegisterView(CreateView):
+    form_class = UserCreationForm
+    template_name = 'users/register.html'  # Ваш шаблон
+    success_url = reverse_lazy('login')
 
 
 class ProfileView(DetailView):
