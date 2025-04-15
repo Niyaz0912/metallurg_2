@@ -3,12 +3,19 @@ from django.contrib.auth.models import User as DefaultUser
 from .models import User
 
 
-class LoginForm(forms.Form):
+class StyleFormMixin:
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            field.widget.attrs['class'] = 'form-control'
+
+
+class LoginForm(StyleFormMixin, forms.Form):
     username = forms.CharField(max_length=255)
     password = forms.CharField(max_length=255, widget=forms.PasswordInput)
 
 
-class RegistrationForm(forms.ModelForm):
+class RegistrationForm(StyleFormMixin, forms.ModelForm):
     password1 = forms.CharField(max_length=255, widget=forms.PasswordInput)
     password2 = forms.CharField(max_length=255, widget=forms.PasswordInput)
 
@@ -29,3 +36,4 @@ class RegistrationForm(forms.ModelForm):
         if commit:
             user.save()
         return user
+
