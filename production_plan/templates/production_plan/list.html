@@ -20,5 +20,7 @@
     {% endfor %}
 </div>
 
-<a href="{% url 'production_plan:create' %}" class="btn btn-success">Создать новый план</a>
+{% if user.is_authenticated and user.role in 'admin director' %}
+    <a href="{% url 'production_plan:create' %}" class="btn btn-success">Создать новый план</a>
+{% endif %}
 {% endblock %}

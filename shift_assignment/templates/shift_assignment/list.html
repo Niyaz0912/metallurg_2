@@ -20,5 +20,7 @@
     {% endfor %}
 </div>
 
-<a href="{% url 'shift_assignment:create' %}" class="btn btn-success">Создать новое задание</a>
+{% if user.is_authenticated and user.role in 'master director' %}
+    <a href="{% url 'shift_assignment:create' %}" class="btn btn-success">Создать новое задание</a>
+{% endif %}
 {% endblock %}
