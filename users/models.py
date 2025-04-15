@@ -15,6 +15,7 @@ class UserRoles(models.TextChoices):
     EMPLOYEE = 'employee', _('Employee')
     OPERATOR = 'operator', _('Operator')
     MASTER = 'master', _('Master')
+    DIRECTOR = 'director', _('Director')
     ADMIN = 'admin', _('Administrator')
 
 
