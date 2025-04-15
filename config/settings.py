@@ -16,6 +16,9 @@ DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
+DEBUG_TOOLBAR_CONFIG = {
+    'SHOW_TOOLBAR_CALLBACK': lambda request: False,  # Полностью отключает toolbar
+}
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -24,6 +27,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # 'debug_toolbar',
 
     # Custom apps
     'users',
@@ -39,7 +43,16 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'config.middleware.AuthRedirectMiddleware',
+    # 'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
+
+INTERNAL_IPS = ['127.0.0.1']
+
+# Настройки перенаправлений
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'production:list'  # Дефолтный редирект
+LOGOUT_REDIRECT_URL = 'login'
 
 ROOT_URLCONF = 'config.urls'
 
@@ -77,6 +90,10 @@ DATABASES = {
         'PORT': PG_PORT,
     }
 }
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
