@@ -16,9 +16,8 @@ class ShiftAssignment(models.Model):
     part_blueprint = models.FileField(
         upload_to='part_blueprints/',
         verbose_name='Чертеж детали',
-        blank=True,  # Разрешает пустое значение в формах
-        null=True  # Разрешает NULL в базе данных
-
+        blank=True,
+        null=True
     )
     execution_status = models.BooleanField(
         default=False,
@@ -33,7 +32,6 @@ class ShiftAssignment(models.Model):
         auto_now=True,
         verbose_name='Дата обновления'
     )
-
     quantity = models.IntegerField()
 
     def __str__(self):
@@ -71,8 +69,8 @@ class ShiftAssignmentArchive(models.Model):
     part_blueprint = models.FileField(
         upload_to='archived_blueprints/',
         verbose_name='Чертеж детали',
-        blank=True,  # Добавлено
-        null=True  # Добавлено
+        blank=True,
+        null=True
     )
     actual_quantity = models.IntegerField(
         null=True,
@@ -106,8 +104,8 @@ class ShiftAssignmentArchive(models.Model):
             date=assignment.date,
             machine_number=assignment.machine_number,
             operator=assignment.operator,
-            order=assignment.order,
-            part=assignment.part,
+            order=getattr(assignment, 'order', ''),  # если поле есть
+            part=getattr(assignment, 'part', ''),    # если поле есть
             quantity=assignment.quantity,
             part_blueprint=assignment.part_blueprint,
             comment=assignment.comment,
@@ -123,3 +121,32 @@ class ShiftAssignmentArchive(models.Model):
             models.Index(fields=['date']),
             models.Index(fields=['operator']),
         ]
+
+
+class MachineStatus(models.Model):
+    STATUS_CHOICES = [
+        ('working', 'Работает'),
+        ('idle', 'В простое'),
+        ('setup', 'На переналадке'),
+        ('repair', 'В ремонте'),
+    ]
+
+    machine_number = models.IntegerField(verbose_name='Номер станка', unique=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, verbose_name='Статус станка')
+    breakdown_time = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Дата и время поломки',
+        help_text='Указывайте дату и время, когда станок сломался, если статус "В ремонте"'
+    )
+    notes = models.TextField(blank=True, verbose_name='Дополнительные заметки')
+
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата обновления статуса')
+
+    def __str__(self):
+        return f'Станок #{self.machine_number} — {self.get_status_display()}'
+
+    class Meta:
+        verbose_name = 'Статус станка'
+        verbose_name_plural = 'Статусы станков'
+        ordering = ['machine_number']
