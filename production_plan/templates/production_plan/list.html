@@ -13,7 +13,9 @@
                     <p class="card-text">Количество: {{ plan.quantity }}</p>
                     <p class="card-text">Прогресс: {{ plan.progress }}%</p>
                     <p class="card-text">Дедлайн: {{ plan.deadline }}</p>
+                    {% if user.is_authenticated and user.role == 'admin' or user.role == 'director' %}
                     <a href="{% url 'production_plan:detail' plan.pk %}" class="btn btn-primary">Подробнее</a>
+                    {% endif %}
                 </div>
             </div>
         </div>
