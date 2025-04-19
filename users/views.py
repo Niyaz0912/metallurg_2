@@ -4,7 +4,6 @@ from django.views.generic import CreateView, DetailView
 from django.urls import reverse_lazy
 from users.models import User
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import get_object_or_404
 from production_plan.models import ProductionPlan, Supply
 from shift_assignment.models import MachineStatus, ShiftAssignment
 
@@ -45,7 +44,6 @@ class ProfileView(LoginRequiredMixin, DetailView):
 
         # Данные для оператора
         if user.role == 'operator':
-            # Убрали select_related для machine_number, так как это не ForeignKey
             context['current_assignment'] = ShiftAssignment.objects.filter(
                 operator=user,
                 execution_status=False
@@ -54,7 +52,6 @@ class ProfileView(LoginRequiredMixin, DetailView):
         # Данные для мастера
         elif user.role == 'master':
             context['machine_statuses'] = MachineStatus.objects.all()
-            # Оставили select_related только для operator
             context['recent_assignments'] = ShiftAssignment.objects.filter(
                 execution_status=True
             ).select_related('operator').order_by('-updated_at')[:10]
@@ -63,16 +60,16 @@ class ProfileView(LoginRequiredMixin, DetailView):
         elif user.role in ['admin', 'director']:
             context['active_plans'] = ProductionPlan.objects.filter(
                 is_completed=False
-            ).order_by('-start_date')[:5]
+            ).order_by('-deadline')[:5]
             context['recent_completed_plans'] = ProductionPlan.objects.filter(
                 is_completed=True
-            ).order_by('-end_date')[:5]
+            ).order_by('-deadline')[:5]
             context['upcoming_supplies'] = Supply.objects.filter(
                 status='pending'
-            ).order_by('delivery_date')[:5]
+            ).order_by('expected_date')[:5]  # Исправлено delivery_date на expected_date
             context['recent_received_supplies'] = Supply.objects.filter(
                 status='received'
-            ).order_by('-receipt_date')[:5]
+            ).order_by('-received_date')[:5]  # Исправлено receipt_date на received_date
 
         return context
 
