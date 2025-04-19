@@ -45,26 +45,45 @@ class ProductionPlanCreateView(StaffRequiredMixin, CreateView):
     model = ProductionPlan
     form_class = ProductionPlanForm
     template_name = 'production_plan/create.html'
+    success_url = reverse_lazy('production_plan:list')  # Перенаправление после создания
 
     def form_valid(self, form):
         form.instance.created_by = self.request.user
         return super().form_valid(form)
+
+    def get_success_url(self):
+        """Дополнительная логика перенаправления при необходимости"""
+        # Можно добавить сообщение об успешном создании
+        # messages.success(self.request, "Производственный план успешно создан")
+        return super().get_success_url()
 
 
 class ProductionPlanUpdateView(StaffRequiredMixin, UpdateView):
     model = ProductionPlan
     form_class = ProductionPlanForm
     template_name = 'production_plan/update.html'
+    success_url = reverse_lazy('production_plan:list')  # Перенаправление после обновления
 
     def form_valid(self, form):
         form.instance.updated_by = self.request.user
         return super().form_valid(form)
+
+    def get_success_url(self):
+        """Альтернативный вариант - перенаправление на детали плана"""
+        # return reverse_lazy('production_plan:detail', kwargs={'pk': self.object.pk})
+        return super().get_success_url()
 
 
 class ProductionPlanDeleteView(StaffRequiredMixin, DeleteView):
     model = ProductionPlan
     template_name = 'production_plan/delete.html'
     success_url = reverse_lazy('production_plan:list')
+
+    def delete(self, request, *args, **kwargs):
+        """Дополнительная логика перед удалением"""
+        # Можно добавить сообщение об успешном удалении
+        # messages.success(self.request, "План успешно удален")
+        return super().delete(request, *args, **kwargs)
 
 
 class ProductionPlanDetailView(LoginRequiredMixin, DetailView):

@@ -3,65 +3,105 @@ from django.contrib.auth.forms import UserCreationForm
 from django.views.generic import CreateView, DetailView
 from django.urls import reverse_lazy
 from users.models import User
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import get_object_or_404
+from production_plan.models import ProductionPlan, Supply
+from shift_assignment.models import MachineStatus, ShiftAssignment
 
 
 class CustomLoginView(LoginView):
-    template_name = 'users/login.html'  # Ваш шаблон
+    template_name = 'users/login.html'
     redirect_authenticated_user = True
 
     def get_success_url(self):
-        if self.request.user.role == 'admin':
-            return reverse_lazy('admin:index')
-        elif self.request.user.role in ['director', 'master']:
+        user = self.request.user
+        if user.role == 'admin':
             return reverse_lazy('production_plan:list')
-        return reverse_lazy('shifts:list')
+        elif user.role in ['director', 'master']:
+            return reverse_lazy('production_plan:list')
+        else:
+            return reverse_lazy('users:profile', kwargs={'pk': user.pk})
 
 
 class CustomLogoutView(LogoutView):
-    template_name = 'users/logout.html'  # Ваш шаблон
+    template_name = 'users/logout.html'
     next_page = 'login'
 
 
 class RegisterView(CreateView):
     form_class = UserCreationForm
-    template_name = 'users/register.html'  # Ваш шаблон
+    template_name = 'users/register.html'
     success_url = reverse_lazy('login')
 
 
-class ProfileView(DetailView):
+class ProfileView(LoginRequiredMixin, DetailView):
     model = User
     template_name = 'users/profile.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Логика для карточки с заданием на смену
-        # Здесь вы можете получить задание из базы данных и отобразить его
-        shift_task = None  # Получите задание из базы данных
-        context['shift_task'] = shift_task
+        user = self.request.user
+        context['current_user'] = user
+
+        # Данные для оператора
+        if user.role == 'operator':
+            # Убрали select_related для machine_number, так как это не ForeignKey
+            context['current_assignment'] = ShiftAssignment.objects.filter(
+                operator=user,
+                execution_status=False
+            ).first()
+
+        # Данные для мастера
+        elif user.role == 'master':
+            context['machine_statuses'] = MachineStatus.objects.all()
+            # Оставили select_related только для operator
+            context['recent_assignments'] = ShiftAssignment.objects.filter(
+                execution_status=True
+            ).select_related('operator').order_by('-updated_at')[:10]
+
+        # Данные для администратора и директора
+        elif user.role in ['admin', 'director']:
+            context['active_plans'] = ProductionPlan.objects.filter(
+                is_completed=False
+            ).order_by('-start_date')[:5]
+            context['recent_completed_plans'] = ProductionPlan.objects.filter(
+                is_completed=True
+            ).order_by('-end_date')[:5]
+            context['upcoming_supplies'] = Supply.objects.filter(
+                status='pending'
+            ).order_by('delivery_date')[:5]
+            context['recent_received_supplies'] = Supply.objects.filter(
+                status='received'
+            ).order_by('-receipt_date')[:5]
+
         return context
 
 
-class ShiftArchiveView(DetailView):
+class ShiftArchiveView(LoginRequiredMixin, DetailView):
     model = User
     template_name = 'users/shift_archive.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Логика для отображения архива смен
-        # Здесь вы можете получить архив смен из базы данных и отобразить его
-        shift_archive = None  # Получите архив смен из базы данных
-        context['shift_archive'] = shift_archive
+        user = self.request.user
+
+        if user.role == 'operator':
+            context['assignment_history'] = ShiftAssignment.objects.filter(
+                operator=user
+            ).order_by('-date')[:20]
+        else:
+            context['assignment_history'] = ShiftAssignment.objects.select_related(
+                'operator'
+            ).order_by('-date')[:50]
+
         return context
 
 
-class ShiftScheduleView(DetailView):
+class ShiftScheduleView(LoginRequiredMixin, DetailView):
     model = User
     template_name = 'users/shift_schedule.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Логика для отображения графика смен
-        # Здесь вы можете получить график смен из базы данных и отобразить его
-        shift_schedule = None  # Получите график смен из базы данных
-        context['shift_schedule'] = shift_schedule
+        # Здесь будет логика для графика смен
         return context
