@@ -1,22 +1,58 @@
+/* Основные стили */
 body {
     font-family: Arial, sans-serif;
+    background:
+        linear-gradient(rgba(245, 245, 245, 0.7), rgba(245, 245, 245, 0.7)),
+        url('https://i.pinimg.com/originals/11/89/23/11892386512270209a6b8e6e3a3b3e3e.jpg') no-repeat center center fixed;
+    background-size: cover;
+    min-height: 100vh;
+    color: #343a40;
 }
 
 .container {
     max-width: 1200px;
     margin: 0 auto;
+    background-color: rgba(255, 255, 255, 0.7);
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 0 25px rgba(0, 0, 0, 0.15);
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+    border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .navbar {
     padding: 1rem;
+    border-radius: 10px;
+    margin-bottom: 25px;
+    background-color: #2c3e50 !important;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .navbar-brand {
     font-size: 1.5rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: white !important;
 }
 
+h1 {
+    color: #2c3e50;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+    font-weight: 600;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #2c3e50;
+}
+
+/* Карточки */
 .card {
     margin-bottom: 20px;
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
 }
 
 .card-body {
@@ -31,9 +67,17 @@ body {
     font-size: 1rem;
 }
 
+/* Кнопки */
 .btn {
     padding: 10px 20px;
     border-radius: 5px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .btn-primary {
@@ -56,6 +100,7 @@ body {
     border-color: #17a2b8;
 }
 
+/* Утилиты */
 .text-center {
     text-align: center;
 }
@@ -67,4 +112,14 @@ body {
 
 .mt-5 {
     margin-top: 3rem;
+}
+
+/* Футер */
+footer {
+    background-color: #2c3e50;
+    color: white;
+    padding: 15px 0;
+    border-radius: 0 0 10px 10px;
+    margin-top: 30px;
+    text-align: center;
 }
