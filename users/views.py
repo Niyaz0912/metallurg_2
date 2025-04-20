@@ -1,9 +1,10 @@
 from django.contrib.auth.views import LoginView, LogoutView
-from django.contrib.auth.forms import UserCreationForm
-from django.views.generic import CreateView, DetailView
+from django.views.generic import CreateView, DetailView, UpdateView
 from django.urls import reverse_lazy
-from users.models import User
 from django.contrib.auth.mixins import LoginRequiredMixin
+
+from .forms import RegistrationForm, UserUpdateForm
+from .models import User
 from production_plan.models import ProductionPlan, Supply
 from shift_assignment.models import MachineStatus, ShiftAssignment
 
@@ -28,7 +29,7 @@ class CustomLogoutView(LogoutView):
 
 
 class RegisterView(CreateView):
-    form_class = UserCreationForm
+    form_class = RegistrationForm
     template_name = 'users/register.html'
     success_url = reverse_lazy('login')
 
@@ -42,21 +43,16 @@ class ProfileView(LoginRequiredMixin, DetailView):
         user = self.request.user
         context['current_user'] = user
 
-        # Данные для оператора
         if user.role == 'operator':
             context['current_assignment'] = ShiftAssignment.objects.filter(
                 operator=user,
                 execution_status=False
             ).first()
-
-        # Данные для мастера
         elif user.role == 'master':
             context['machine_statuses'] = MachineStatus.objects.all()
             context['recent_assignments'] = ShiftAssignment.objects.filter(
                 execution_status=True
             ).select_related('operator').order_by('-updated_at')[:10]
-
-        # Данные для администратора и директора
         elif user.role in ['admin', 'director']:
             context['active_plans'] = ProductionPlan.objects.filter(
                 is_completed=False
@@ -66,12 +62,24 @@ class ProfileView(LoginRequiredMixin, DetailView):
             ).order_by('-deadline')[:5]
             context['upcoming_supplies'] = Supply.objects.filter(
                 status='pending'
-            ).order_by('expected_date')[:5]  # Исправлено delivery_date на expected_date
+            ).order_by('expected_date')[:5]
             context['recent_received_supplies'] = Supply.objects.filter(
                 status='received'
-            ).order_by('-received_date')[:5]  # Исправлено receipt_date на received_date
+            ).order_by('-received_date')[:5]
 
         return context
+
+
+class UserUpdateView(LoginRequiredMixin, UpdateView):
+    model = User
+    form_class = UserUpdateForm
+    template_name = 'users/update.html'
+
+    def get_object(self, queryset=None):
+        return self.request.user
+
+    def get_success_url(self):
+        return reverse_lazy('users:profile', kwargs={'pk': self.object.pk})
 
 
 class ShiftArchiveView(LoginRequiredMixin, DetailView):
@@ -100,5 +108,5 @@ class ShiftScheduleView(LoginRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Здесь будет логика для графика смен
         return context
+

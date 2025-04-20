@@ -1,5 +1,6 @@
 from django import forms
-from django.contrib.auth.models import User as DefaultUser
+from django.contrib.auth.forms import UserCreationForm, UserChangeForm
+from django.utils.translation import gettext_lazy as _
 from .models import User
 
 
@@ -11,29 +12,59 @@ class StyleFormMixin:
 
 
 class LoginForm(StyleFormMixin, forms.Form):
-    username = forms.CharField(max_length=255)
-    password = forms.CharField(max_length=255, widget=forms.PasswordInput)
+    username = forms.CharField(max_length=255, label=_('Username'))
+    password = forms.CharField(max_length=255, widget=forms.PasswordInput, label=_('Password'))
 
 
-class RegistrationForm(StyleFormMixin, forms.ModelForm):
-    password1 = forms.CharField(max_length=255, widget=forms.PasswordInput)
-    password2 = forms.CharField(max_length=255, widget=forms.PasswordInput)
+class RegistrationForm(StyleFormMixin, UserCreationForm):
+    first_name = forms.CharField(
+        max_length=30,
+        required=False,
+        label=_('First Name')
+    )
+    last_name = forms.CharField(
+        max_length=30,
+        required=False,
+        label=_('Last Name')
+    )
+    phone = forms.CharField(
+        max_length=20,
+        required=False,
+        label=_('Phone')
+    )
 
     class Meta:
         model = User
-        fields = ['username', 'surname', 'name', 'role', 'phone']
-
-    def clean_password2(self):
-        password1 = self.cleaned_data.get('password1')
-        password2 = self.cleaned_data.get('password2')
-        if password1 and password2 and password1 != password2:
-            raise forms.ValidationError('Пароли не совпадают')
-        return password2
+        fields = ('username', 'password1', 'password2', 'first_name', 'last_name', 'phone')
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        user.set_password(self.cleaned_data['password1'])
+        user.role = 'employee'
         if commit:
             user.save()
         return user
 
+
+class UserUpdateForm(StyleFormMixin, UserChangeForm):
+    phone = forms.CharField(
+        max_length=20,
+        required=False,
+        label=_('Phone')
+    )
+
+    class Meta:
+        model = User
+        fields = ('username', 'first_name', 'last_name', 'email', 'phone')
+        labels = {
+            'username': _('Username'),
+            'first_name': _('First Name'),
+            'last_name': _('Last Name'),
+            'email': _('Email'),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if 'password' in self.fields:
+            self.fields.pop('password')
+        for field in self.fields.values():
+            field.widget.attrs.update({'class': 'form-control'})

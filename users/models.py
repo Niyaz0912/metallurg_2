@@ -8,8 +8,10 @@ class UserRoles(models.TextChoices):
     Определение ролей пользователей с использованием TextChoices.
 
     Это перечисление содержит доступные роли пользователей в системе:
+    - Сотрудник
     - Оператор
     - Мастер
+    - Директор
     - Администратор
     """
     EMPLOYEE = 'employee', _('Employee')
@@ -20,20 +22,26 @@ class UserRoles(models.TextChoices):
 
 
 class User(AbstractUser):
-    surname = models.CharField(max_length=255)
-    name = models.CharField(max_length=255)
-    role = models.CharField(max_length=255, choices=UserRoles.choices)
-    phone = models.CharField(max_length=20, blank=True, null=True)
+    role = models.CharField(
+        max_length=255,
+        choices=UserRoles.choices,
+        verbose_name=_('Role')
+    )
+    phone = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True,
+        verbose_name=_('Phone')
+    )
 
-    USERNAME_FIELD = 'username'  # Используйте стандартное поле для входа
-    REQUIRED_FIELDS = ['surname', 'name', 'role', 'phone']
+    USERNAME_FIELD = 'username'
+    REQUIRED_FIELDS = ['first_name', 'last_name', 'role', 'phone']
 
     def __str__(self):
         """Возвращает строковое представление объекта пользователя."""
-        return f'{self.name} {self.surname}'
+        return f'{self.get_full_name()}'
 
     class Meta:
-        """Метаданные модели."""
-        verbose_name = 'User'  # Человекочитаемое имя в единственном числе
-        verbose_name_plural = 'Users'  # Человекочитаемое имя во множественном числе
-        ordering = ['username']  # Сортировка по username по умолчанию
+        verbose_name = _('User')
+        verbose_name_plural = _('Users')
+        ordering = ['username']
