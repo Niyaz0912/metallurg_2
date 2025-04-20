@@ -13,6 +13,11 @@
             <p><strong>Должность:</strong> {{ current_user.get_role_display }}</p>
             <p><strong>Email:</strong> {{ current_user.email }}</p>
         </div>
+        <div class="card-footer">
+            <a href="{% url 'users:update' current_user.pk %}" class="btn btn-outline-primary">
+                <i class="bi bi-pencil"></i> Редактировать профиль
+            </a>
+        </div>
     </div>
 
     {% if current_user.role == 'operator' %}
@@ -52,6 +57,14 @@
 
     {% if current_user.role == 'master' %}
     <!-- Блок мастера -->
+    <div class="row mb-3">
+        <div class="col-md-12">
+            <a href="{% url 'shift_assignment:upload' %}" class="btn btn-primary">
+                <i class="bi bi-upload"></i> Создать сменные задания (Excel)
+            </a>
+        </div>
+    </div>
+
     <div class="row">
         <div class="col-md-6">
             <div class="card mb-4">
@@ -120,6 +133,16 @@
     </div>
     {% endif %}
 
-    <!-- Блок для администратора/директора остается без изменений -->
+    {% if current_user.role == 'admin' or current_user.role == 'director' %}
+    <!-- Блок для администратора/директора -->
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+            <h4>Панель управления</h4>
+        </div>
+        <div class="card-body">
+            <!-- Здесь можно добавить контент для администратора/директора -->
+        </div>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

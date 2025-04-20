@@ -109,18 +109,33 @@ class ShiftAssignmentArchiveView(LoginRequiredMixin, ListView):
 
 @login_required
 def upload_shift_assignments(request):
-    if not request.user.role in ['master', 'director']:
+    if request.user.role not in ['master', 'director']:
         raise PermissionDenied("У вас нет прав для загрузки заданий")
+
+    template_name = 'shift_assignment/upload.html'
+    context = {
+        'title': 'Загрузка сменных заданий из Excel',
+        'example_columns': [
+            'customer (обязательно)',
+            'date (обязательно, формат ДД.ММ.ГГГГ)',
+            'machine_number (обязательно)',
+            'operator (обязательно, имя пользователя)',
+            'order (обязательно)',
+            'part (обязательно)',
+            'quantity (обязательно, число)',
+            'comment (необязательно)'
+        ]
+    }
 
     if request.method == 'POST':
         file = request.FILES.get('file')
         if not file:
             messages.error(request, 'Файл не выбран')
-            return redirect('shift_assignment:upload')
+            return render(request, template_name, context)
 
         if not file.name.endswith(('.xlsx', '.xls')):
             messages.error(request, 'Поддерживаются только файлы Excel (.xlsx, .xls)')
-            return redirect('shift_assignment:upload')
+            return render(request, template_name, context)
 
         try:
             df = pd.read_excel(file)
@@ -130,10 +145,12 @@ def upload_shift_assignments(request):
             if not all(col in df.columns for col in required_columns):
                 missing = set(required_columns) - set(df.columns)
                 messages.error(request, f'Отсутствуют обязательные колонки: {", ".join(missing)}')
-                return redirect('shift_assignment:upload')
+                return render(request, template_name, context)
 
             success_count = 0
-            for _, row in df.iterrows():
+            errors = []
+
+            for idx, row in df.iterrows():
                 try:
                     operator = User.objects.get(username=row['operator'])
                     ShiftAssignment.objects.create(
@@ -149,15 +166,23 @@ def upload_shift_assignments(request):
                     )
                     success_count += 1
                 except User.DoesNotExist:
-                    messages.warning(request, f'Оператор {row["operator"]} не найден')
+                    errors.append(f'Строка {idx + 2}: Оператор "{row["operator"]}" не найден')
                 except Exception as e:
-                    messages.warning(request, f'Ошибка в строке {_ + 2}: {str(e)}')
+                    errors.append(f'Строка {idx + 2}: {str(e)}')
 
-            messages.success(request, f'Успешно загружено {success_count} заданий')
+            if success_count > 0:
+                messages.success(request, f'Успешно загружено {success_count} заданий')
+            if errors:
+                messages.warning(request, f'Найдено {len(errors)} ошибок при обработке файла')
+                for error in errors[:5]:  # Показываем первые 5 ошибок
+                    messages.warning(request, error)
+                if len(errors) > 5:
+                    messages.warning(request, f'...и еще {len(errors) - 5} ошибок')
+
             return redirect('shift_assignment:list')
 
         except Exception as e:
             messages.error(request, f'Ошибка обработки файла: {str(e)}')
-            return redirect('shift_assignment:upload')
+            return render(request, template_name, context)
 
-    return render(request, 'shift_assignment/upload.html', {'title': 'Загрузка заданий из Excel'})
+    return render(request, template_name, context)
