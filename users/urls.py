@@ -12,4 +12,6 @@ urlpatterns = [
     path('profile/<int:pk>/', views.ProfileView.as_view(), name='profile'),
     path('shift_archive/<int:pk>/', views.ShiftArchiveView.as_view(), name='shift_archive'),
     path('shift_schedule/<int:pk>/', views.ShiftScheduleView.as_view(), name='shift_schedule'),
+    path('profile/<int:pk>/update/', views.UserUpdateView.as_view(), name='update')
+
 ]
