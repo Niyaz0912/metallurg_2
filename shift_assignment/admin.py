@@ -45,7 +45,7 @@ class ShiftAssignmentArchiveAdmin(admin.ModelAdmin):
         'customer', 'order', 'part', 'operator__username'
     )
     readonly_fields = (
-        'original_id', 'completed_at', 'shift_duration'
+        'original_id', 'completed_at'  # Убрали shift_duration
     )
     fieldsets = (
         ('Основная информация', {
@@ -56,7 +56,7 @@ class ShiftAssignmentArchiveAdmin(admin.ModelAdmin):
         }),
         ('Результаты выполнения', {
             'fields': (
-                'actual_quantity', 'quality_check', 'shift_duration'
+                'actual_quantity', 'quality_check'  # Убрали shift_duration
             )
         }),
         ('Дополнительно', {
