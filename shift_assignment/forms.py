@@ -1,5 +1,5 @@
 from django import forms
-from .models import ShiftAssignment, MachineStatus
+from .models import ShiftAssignment
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -33,14 +33,14 @@ class UpdateShiftAssignmentForm(StyleFormMixin, forms.ModelForm):
         fields = ['quantity', 'execution_status', 'comment']
 
 
-class MachineStatusForm(StyleFormMixin, forms.ModelForm):
-    breakdown_time = forms.DateTimeField(
-        required=False,
-        widget=forms.DateTimeInput(attrs={'type': 'datetime-local'}),
-        label='Дата и время поломки'
-    )
-
-    class Meta:
-        model = MachineStatus
-        fields = ['machine_number', 'status', 'breakdown_time', 'notes']
-
+# class MachineStatusForm(StyleFormMixin, forms.ModelForm):
+#     breakdown_time = forms.DateTimeField(
+#         required=False,
+#         widget=forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+#         label='Дата и время поломки'
+#     )
+#
+#     class Meta:
+#         model = MachineStatus
+#         fields = ['machine_number', 'status', 'breakdown_time', 'notes']
+#
