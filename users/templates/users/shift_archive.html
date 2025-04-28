@@ -14,5 +14,5 @@
 {% else %}
     <p>Архив смен пуст.</p>
 {% endif %}
-<a href="{% url 'users:profile' user.pk %}" class="btn btn-primary mt-3">Назад в профиль</a>
+<a href="{% url 'users:profile' user.username %}" class="btn btn-primary mt-3">Назад в профиль</a>
 {% endblock %}

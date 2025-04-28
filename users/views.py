@@ -1,9 +1,10 @@
 from django.contrib.auth.views import LoginView, LogoutView
-from django.views.generic import CreateView, DetailView, UpdateView, TemplateView
-from django.urls import reverse_lazy
+from django.views.generic import CreateView, DetailView, UpdateView, TemplateView, RedirectView
+from django.urls import reverse_lazy, reverse
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied
 from django.utils import timezone
+from django.shortcuts import get_object_or_404
 
 from .forms import RegistrationForm, UserUpdateForm
 from .models import User
@@ -79,6 +80,14 @@ class ProfileView(LoginRequiredMixin, DetailView):
         return context
 
 
+class LegacyProfileRedirectView(LoginRequiredMixin, RedirectView):
+    permanent = True
+
+    def get_redirect_url(self, *args, **kwargs):
+        user = get_object_or_404(User, pk=kwargs['pk'])
+        return reverse('users:profile', kwargs={'username': user.username})
+
+
 class UserUpdateView(LoginRequiredMixin, UpdateView):
     model = User
     form_class = UserUpdateForm
@@ -115,6 +124,14 @@ class ShiftArchiveView(LoginRequiredMixin, DetailView):
             ).order_by('-date')[:50]
 
         return context
+
+
+class LegacyShiftArchiveRedirectView(LoginRequiredMixin, RedirectView):
+    permanent = True
+
+    def get_redirect_url(self, *args, **kwargs):
+        user = get_object_or_404(User, pk=kwargs['pk'])
+        return reverse('users:shift_archive', kwargs={'username': user.username})
 
 
 class ShiftScheduleView(LoginRequiredMixin, TemplateView):
