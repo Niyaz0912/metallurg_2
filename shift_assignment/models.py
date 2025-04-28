@@ -1,152 +1,113 @@
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 
 class ShiftAssignment(models.Model):
     customer = models.CharField(max_length=255, verbose_name='Клиент')
-    date = models.DateField(verbose_name='Дата')
-    machine_number = models.IntegerField(verbose_name='Номер станка')
+    date = models.DateField(verbose_name='Дата задания', default=timezone.now)
+    machine_number = models.PositiveIntegerField(verbose_name='Номер станка')
     operator = models.ForeignKey(
         settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name='shifts',
+        on_delete=models.PROTECT,
+        related_name='shift_assignments',
         verbose_name='Оператор'
     )
     part_blueprint = models.FileField(
         upload_to='part_blueprints/',
-        verbose_name='Чертеж детали',
+        verbose_name='Чертеж',
         blank=True,
         null=True
     )
-    execution_status = models.BooleanField(
-        default=False,
-        verbose_name='Статус выполнения'
-    )
+    execution_status = models.BooleanField(default=False, verbose_name='Выполнено')
     comment = models.TextField(blank=True, verbose_name='Комментарий')
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name='Дата создания'
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Создано')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='Обновлено')
+    quantity = models.PositiveIntegerField(verbose_name='Количество')
+    order = models.CharField(max_length=255, verbose_name='Номер заказа')
+    part = models.CharField(max_length=255, verbose_name='Деталь')
+    production_plan = models.ForeignKey(
+        'production_plan.ProductionPlan',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='shift_assignments',
+        verbose_name='План производства'
     )
-    updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name='Дата обновления'
-    )
-    quantity = models.IntegerField()
 
     def __str__(self):
-        return f'Сменное задание #{self.id} для {self.operator.username}'
+        return f'Задание #{self.id} ({self.date})'
 
-    def complete_shift(self):
-        """Метод для завершения смены и переноса в архив"""
+    def complete(self):
+        """Отмечает задание как выполненное"""
         if not self.execution_status:
             self.execution_status = True
             self.save()
-            ShiftAssignmentArchive.objects.create_from_assignment(self)
-        return self.execution_status
+            ShiftAssignmentArchive.create_from_assignment(self)
+            if self.production_plan:
+                self.production_plan.update_progress()
 
     class Meta:
-        verbose_name = 'Сменное задание'
-        verbose_name_plural = 'Сменные задания'
+        verbose_name = _('Сменное задание')
+        verbose_name_plural = _('Сменные задания')
         ordering = ['-date', 'machine_number']
+        indexes = [
+            models.Index(fields=['date']),
+            models.Index(fields=['execution_status']),
+            models.Index(fields=['operator']),
+        ]
 
 
 class ShiftAssignmentArchive(models.Model):
-    original_id = models.PositiveIntegerField(verbose_name='ID оригинального задания')
+    original_id = models.PositiveIntegerField(verbose_name='ID задания')
     customer = models.CharField(max_length=255, verbose_name='Клиент')
     date = models.DateField(verbose_name='Дата выполнения')
-    machine_number = models.IntegerField(verbose_name='Номер станка')
+    machine_number = models.PositiveIntegerField(verbose_name='Станок')
     operator = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
-        related_name='archived_shifts',
+        related_name='archived_assignments',
         verbose_name='Оператор'
     )
     order = models.CharField(max_length=255, verbose_name='Заказ')
     part = models.CharField(max_length=255, verbose_name='Деталь')
-    quantity = models.IntegerField(verbose_name='Количество')
-    part_blueprint = models.FileField(
-        upload_to='archived_blueprints/',
-        verbose_name='Чертеж детали',
-        blank=True,
-        null=True
-    )
-    actual_quantity = models.IntegerField(
+    quantity = models.PositiveIntegerField(verbose_name='Количество')
+    actual_quantity = models.PositiveIntegerField(
         null=True,
         blank=True,
         verbose_name='Фактическое количество'
     )
-    completed_at = models.DateTimeField(
-        default=timezone.now,
-        verbose_name='Дата завершения'
-    )
+    completed_at = models.DateTimeField(auto_now_add=True, verbose_name='Завершено')
     comment = models.TextField(blank=True, verbose_name='Комментарий')
-    quality_check = models.BooleanField(
-        default=False,
-        verbose_name='Проверка качества'
-    )
-    shift_duration = models.DurationField(
+    quality_check = models.BooleanField(default=False, verbose_name='Проверка качества')
+    production_plan = models.ForeignKey(
+        'production_plan.ProductionPlan',
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        verbose_name='Длительность смены'
+        related_name='archived_assignments',
+        verbose_name='План производства'
     )
-
-    def __str__(self):
-        return f'Архивная смена #{self.id} (ориг. #{self.original_id})'
 
     @classmethod
     def create_from_assignment(cls, assignment):
-        """Создает архивную запись на основе выполненного задания"""
         return cls.objects.create(
             original_id=assignment.id,
             customer=assignment.customer,
             date=assignment.date,
             machine_number=assignment.machine_number,
             operator=assignment.operator,
-            order=getattr(assignment, 'order', ''),  # если поле есть
-            part=getattr(assignment, 'part', ''),    # если поле есть
+            order=assignment.order,
+            part=assignment.part,
             quantity=assignment.quantity,
-            part_blueprint=assignment.part_blueprint,
+            actual_quantity=assignment.quantity,
             comment=assignment.comment,
-            completed_at=timezone.now()
+            production_plan=assignment.production_plan
         )
 
     class Meta:
-        verbose_name = 'Архивная смена'
-        verbose_name_plural = 'Архив смен'
+        verbose_name = _('Архивное задание')
+        verbose_name_plural = _('Архив заданий')
         ordering = ['-completed_at']
-        indexes = [
-            models.Index(fields=['original_id']),
-            models.Index(fields=['date']),
-            models.Index(fields=['operator']),
-        ]
-
-
-class MachineStatus(models.Model):
-    STATUS_CHOICES = [
-        ('working', 'Работает'),
-        ('idle', 'В простое'),
-        ('setup', 'На переналадке'),
-        ('repair', 'В ремонте'),
-    ]
-
-    machine_number = models.IntegerField(verbose_name='Номер станка', unique=True)
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, verbose_name='Статус станка')
-    breakdown_time = models.DateTimeField(
-        null=True,
-        blank=True,
-        verbose_name='Дата и время поломки',
-        help_text='Указывайте дату и время, когда станок сломался, если статус "В ремонте"'
-    )
-    notes = models.TextField(blank=True, verbose_name='Дополнительные заметки')
-
-    updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата обновления статуса')
-
-    def __str__(self):
-        return f'Станок #{self.machine_number} — {self.get_status_display()}'
-
-    class Meta:
-        verbose_name = 'Статус станка'
-        verbose_name_plural = 'Статусы станков'
-        ordering = ['machine_number']
