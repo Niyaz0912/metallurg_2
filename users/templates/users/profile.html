@@ -1,148 +1,110 @@
 {% extends 'base.html' %}
+{% load i18n %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2 class="mb-4">Личный кабинет</h2>
-
+<div class="container mt-5">
     <div class="card mb-4">
         <div class="card-header">
             <h4>Профиль пользователя</h4>
         </div>
         <div class="card-body">
-            <p><strong>Имя:</strong> {{ current_user.get_full_name }}</p>
-            <p><strong>Должность:</strong> {{ current_user.get_role_display }}</p>
-            <p><strong>Email:</strong> {{ current_user.email }}</p>
+            <p><strong>Имя:</strong> {{ profile_user.get_full_name }}</p>
+            <p><strong>Должность:</strong> {{ profile_user.get_role_display }}</p>
+            <p><strong>Email:</strong> {{ profile_user.email }}</p>
+            <p><strong>Телефон:</strong> {{ profile_user.phone|default:"не указан" }}</p>
         </div>
         <div class="card-footer">
-            <a href="{% url 'users:update' current_user.pk %}" class="btn btn-outline-primary">
+            <a href="{% url 'users:update' profile_user.username %}" class="btn btn-outline-primary">
                 <i class="bi bi-pencil"></i> Редактировать профиль
             </a>
         </div>
     </div>
 
-    {% if current_user.role == 'operator' %}
-    <!-- Блок оператора -->
+    {% if profile_user.role == 'operator' %}
     <div class="card mb-4">
         <div class="card-header bg-primary text-white">
             <h4>Текущее задание на смену</h4>
         </div>
         <div class="card-body">
             {% if current_assignment %}
-                <h5>Детали задания</h5>
-                <p><strong>Деталь:</strong> {{ current_assignment.part_blueprint }}</p>
+                <p><strong>Клиент:</strong> {{ current_assignment.customer }}</p>
+                <p><strong>Деталь:</strong> {{ current_assignment.part }}</p>
                 <p><strong>Количество:</strong> {{ current_assignment.quantity }}</p>
-                <p><strong>Номер станка:</strong> {{ current_assignment.machine_number }}</p>
-                <p><strong>Статус:</strong> {% if current_assignment.execution_status %}Выполнено{% else %}В работе{% endif %}</p>
-                {% if not current_assignment.execution_status %}
-                <form method="post" action="{% url 'shift_assignment:complete_assignment' current_assignment.id %}">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-success">Задание выполнено</button>
-                </form>
-                {% endif %}
+                <p><strong>Статус:</strong> {{ current_assignment.get_execution_status_display }}</p>
+                <p><strong>Дата задания:</strong> {{ current_assignment.date }}</p>
             {% else %}
-                <p class="text-muted">На данный момент у вас нет активных заданий.</p>
+                <div class="alert alert-info">
+                    Нет активных заданий на текущую смену
+                </div>
             {% endif %}
         </div>
     </div>
 
-    <div class="d-flex gap-2 mb-4">
-        <a href="{% url 'users:shift_archive' current_user.pk %}" class="btn btn-outline-secondary">
-            <i class="bi bi-archive"></i> Архив моих смен
-        </a>
-        <a href="{% url 'users:shift_schedule' current_user.pk %}" class="btn btn-outline-info">
-            <i class="bi bi-calendar"></i> Мой график смен
-        </a>
-    </div>
-    {% endif %}
-
-    {% if current_user.role == 'master' %}
-    <!-- Блок мастера -->
-    <div class="row mb-3">
-        <div class="col-md-12">
-            <a href="{% url 'shift_assignment:upload' %}" class="btn btn-primary">
-                <i class="bi bi-upload"></i> Создать сменные задания (Excel)
+    <div class="card mb-4">
+        <div class="card-header bg-secondary text-white">
+            <h4>История смен</h4>
+        </div>
+        <div class="card-body">
+            <a href="{% url 'users:shift_archive' profile_user.username %}" class="btn btn-outline-secondary">
+                <i class="bi bi-clock-history"></i> Просмотреть архив смен
             </a>
         </div>
     </div>
-
-    <div class="row">
-        <div class="col-md-6">
-            <div class="card mb-4">
-                <div class="card-header bg-warning">
-                    <h4>Статусы станков</h4>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Станок</th>
-                                    <th>Статус</th>
-                                    <th>Действия</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for status in machine_statuses %}
-                                <tr>
-                                    <td>{{ status.machine.name }}</td>
-                                    <td>
-                                        <span class="badge bg-{{ status.get_status_class }}">
-                                            {{ status.get_status_display }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <a href="{% url 'shift_assignment:update_machine_status' status.id %}"
-                                           class="btn btn-sm btn-outline-primary">
-                                            Изменить
-                                        </a>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-6">
-            <div class="card mb-4">
-                <div class="card-header bg-success text-white">
-                    <h4>Последние выполненные задания</h4>
-                </div>
-                <div class="card-body">
-                    {% if recent_assignments %}
-                        <div class="list-group">
-                            {% for assignment in recent_assignments %}
-                            <div class="list-group-item">
-                                <h6>{{ assignment.part_blueprint }}</h6>
-                                <p class="mb-1">{{ assignment.operator.get_full_name }} - Станок №{{ assignment.machine_number }}</p>
-                                <p class="mb-1">Количество: {{ assignment.quantity }}</p>
-                                <small class="text-muted">
-                                    Обновлено: {{ assignment.updated_at|date:"d.m.Y H:i" }}
-                                </small>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <p class="text-muted">Нет выполненных заданий за последнее время.</p>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
     {% endif %}
 
-    {% if current_user.role == 'admin' or current_user.role == 'director' %}
-    <!-- Блок для администратора/директора -->
+    {% if profile_user.role == 'master' or profile_user.role == 'director' or profile_user.role == 'admin' %}
     <div class="card mb-4">
-        <div class="card-header bg-info text-white">
-            <h4>Панель управления</h4>
+        <div class="card-header bg-warning text-dark">
+            <h4>Административные данные</h4>
         </div>
         <div class="card-body">
-            <!-- Здесь можно добавить контент для администратора/директора -->
+            {% if active_assignments %}
+                <h5>Активные задания:</h5>
+                <ul class="list-group">
+                    {% for assignment in active_assignments %}
+                    <li class="list-group-item">
+                        {{ assignment.operator }}: {{ assignment.part }} ({{ assignment.quantity }} шт.)
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            {% if active_plans %}
+                <hr>
+                <h5>Активные производственные планы:</h5>
+                <ul class="list-group">
+                    {% for plan in active_plans %}
+                    <li class="list-group-item">
+                        {{ plan.name }} - до {{ plan.deadline }}
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+
+            {% if upcoming_supplies %}
+                <hr>
+                <h5>Предстоящие поставки:</h5>
+                <ul class="list-group">
+                    {% for supply in upcoming_supplies %}
+                    <li class="list-group-item">
+                        {{ supply.material }} - {{ supply.expected_date }}
+                    </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
         </div>
     </div>
     {% endif %}
+
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+            <h4>График смен</h4>
+        </div>
+        <div class="card-body">
+            <a href="{% url 'users:shift_schedule' %}" class="btn btn-outline-info">
+                <i class="bi bi-calendar-week"></i> Просмотреть график
+            </a>
+        </div>
+    </div>
 </div>
 {% endblock %}
