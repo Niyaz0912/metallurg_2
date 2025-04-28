@@ -12,8 +12,16 @@ class StyleFormMixin:
 
 
 class LoginForm(StyleFormMixin, forms.Form):
-    username = forms.CharField(max_length=255, label=_('Username'))
-    password = forms.CharField(max_length=255, widget=forms.PasswordInput, label=_('Password'))
+    username = forms.CharField(
+        max_length=150,
+        label=_('Username'),
+        help_text=_('Только латинские буквы, цифры и @/./+/-/_')
+    )
+    password = forms.CharField(
+        max_length=255,
+        widget=forms.PasswordInput,
+        label=_('Password')
+    )
 
 
 class RegistrationForm(StyleFormMixin, UserCreationForm):
