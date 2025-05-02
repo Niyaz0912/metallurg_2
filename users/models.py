@@ -13,6 +13,16 @@ class UserRoles(models.TextChoices):
 
 
 class User(AbstractUser):
+    username = models.CharField(
+        _('username'),
+        max_length=150,
+        unique=True,
+        help_text=_('Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.'),
+        validators=[AbstractUser.username_validator],
+        error_messages={
+            'unique': _("A user with that username already exists."),
+        },
+    )
     role = models.CharField(
         max_length=255,
         choices=UserRoles.choices,
@@ -34,6 +44,14 @@ class User(AbstractUser):
 
     def get_role_display(self):
         return dict(UserRoles.choices)[self.role]
+
+    @property
+    def is_master(self):
+        return self.role == 'master'  # Исправлено: прямое сравнение со строкой
+
+    @property
+    def is_operator(self):
+        return self.role == 'operator'  # Исправлено: прямое сравнение со строкой
 
     class Meta:
         verbose_name = _('Пользователь')
