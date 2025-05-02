@@ -1,16 +1,20 @@
+import logging
+
 import pandas as pd
-from django.shortcuts import render, redirect
+from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required  # Добавлен импорт
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 from django.urls import reverse_lazy
-from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied
 from django.utils import timezone  # Добавлен импорт
 from .models import ShiftAssignment, ShiftAssignmentArchive
 from .forms import ShiftAssignmentForm, UpdateShiftAssignmentForm
+from django.views.generic import View
+from django.contrib import messages
 
+logger = logging.getLogger(__name__)
 User = get_user_model()
 
 
@@ -33,7 +37,19 @@ class ShiftAssignmentListView(LoginRequiredMixin, ListView):
     paginate_by = 20
 
     def get_queryset(self):
-        return ShiftAssignment.objects.filter(execution_status=False).order_by('-date')
+        user = self.request.user
+
+        if user.role == 'operator':
+            # Для оператора - только его задания
+            return ShiftAssignment.objects.filter(
+                operator_id=user.username,
+                execution_status=False
+            ).order_by('-date')
+
+        # Для мастеров/директоров - все активные задания
+        return ShiftAssignment.objects.filter(
+            execution_status=False
+        ).order_by('-date')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -92,6 +108,21 @@ class ShiftAssignmentDetailView(LoginRequiredMixin, DetailView):
         return context
 
 
+class CompleteAssignmentView(LoginRequiredMixin, View):
+    """Обработка отметки о выполнении задания оператором"""
+
+    def post(self, request, pk):
+        assignment = get_object_or_404(ShiftAssignment, pk=pk)
+        success, message = assignment.complete(request.user)
+
+        if success:
+            messages.success(request, message)
+        else:
+            messages.error(request, message)
+
+        return redirect('users:profile', username=request.user.username)
+
+
 class ShiftAssignmentArchiveView(LoginRequiredMixin, ListView):
     model = ShiftAssignmentArchive
     template_name = 'shift_assignment/archive.html'
@@ -110,7 +141,7 @@ class ShiftAssignmentArchiveView(LoginRequiredMixin, ListView):
 @login_required
 def upload_shift_assignments(request):
     if request.user.role not in ['master', 'director']:
-        raise PermissionDenied("У вас нет прав для загрузки заданий")
+        raise PermissionDenied("Только мастер или директор могут загружать задания")
 
     template_name = 'shift_assignment/upload.html'
     context = {
@@ -118,13 +149,14 @@ def upload_shift_assignments(request):
         'example_columns': [
             'customer (обязательно)',
             'date (обязательно, формат ДД.ММ.ГГГГ)',
-            'machine_number (обязательно)',
-            'operator (обязательно, имя пользователя)',
+            'machine_number (обязательно, число)',
+            'operator/operator_id (обязательно, логин пользователя)',
             'order (обязательно)',
             'part (обязательно)',
             'quantity (обязательно, число)',
             'comment (необязательно)'
-        ]
+        ],
+        'example_file_url': '/static/files/shift_assignment_example.xlsx'
     }
 
     if request.method == 'POST':
@@ -138,51 +170,130 @@ def upload_shift_assignments(request):
             return render(request, template_name, context)
 
         try:
+            # Чтение файла
             df = pd.read_excel(file)
-            required_columns = ['customer', 'date', 'machine_number', 'operator',
-                                'order', 'part', 'quantity']
 
-            if not all(col in df.columns for col in required_columns):
-                missing = set(required_columns) - set(df.columns)
-                messages.error(request, f'Отсутствуют обязательные колонки: {", ".join(missing)}')
+            # Определение названия колонки с оператором
+            operator_col = None
+            for col in ['operator', 'operator_id']:
+                if col in df.columns:
+                    operator_col = col
+                    break
+
+            # Проверка обязательных колонок
+            required_columns = [
+                'customer',
+                'date',
+                'machine_number',
+                operator_col,
+                'order',
+                'part',
+                'quantity'
+            ]
+
+            missing_columns = [col for col in required_columns if col not in df.columns]
+            if missing_columns:
+                messages.error(
+                    request,
+                    f'Отсутствуют обязательные колонки: {", ".join(missing_columns)}'
+                )
                 return render(request, template_name, context)
 
             success_count = 0
             errors = []
+            duplicates = 0
 
             for idx, row in df.iterrows():
                 try:
-                    operator = User.objects.get(username=row['operator'])
+                    # Валидация данных
+                    if pd.isna(row['customer']) or not str(row['customer']).strip():
+                        raise ValueError("Не указан клиент")
+
+                    if pd.isna(row[operator_col]):
+                        raise ValueError("Не указан оператор")
+
+                    operator = User.objects.get(username=row[operator_col])
+
+                    # Проверка дубликатов
+                    if ShiftAssignment.objects.filter(
+                            date=row['date'],
+                            machine_number=row['machine_number'],
+                            operator=operator,
+                            order=row['order']
+                    ).exists():
+                        duplicates += 1
+                        continue
+
+                    # Создание задания
                     ShiftAssignment.objects.create(
                         customer=row['customer'],
                         date=row['date'],
-                        machine_number=row['machine_number'],
+                        machine_number=int(row['machine_number']),
                         operator=operator,
                         order=row['order'],
                         part=row['part'],
-                        quantity=row['quantity'],
+                        quantity=int(row['quantity']),
                         comment=row.get('comment', ''),
-                        created_by=request.user
+                        production_plan_id=row.get('production_plan_id')
                     )
                     success_count += 1
-                except User.DoesNotExist:
-                    errors.append(f'Строка {idx + 2}: Оператор "{row["operator"]}" не найден')
-                except Exception as e:
-                    errors.append(f'Строка {idx + 2}: {str(e)}')
 
+                except User.DoesNotExist:
+                    errors.append(f'Строка {idx + 2}: Оператор "{row[operator_col]}" не найден')
+                except ValueError as e:
+                    errors.append(f'Строка {idx + 2}: {str(e)}')
+                except Exception as e:
+                    errors.append(f'Строка {idx + 2}: Ошибка - {str(e)}')
+
+            # Формирование итоговых сообщений
             if success_count > 0:
-                messages.success(request, f'Успешно загружено {success_count} заданий')
+                messages.success(
+                    request,
+                    f'Успешно загружено {success_count} заданий'
+                )
+
+            if duplicates > 0:
+                messages.warning(
+                    request,
+                    f'Пропущено {duplicates} дубликатов (задания уже существуют)'
+                )
+
             if errors:
-                messages.warning(request, f'Найдено {len(errors)} ошибок при обработке файла')
-                for error in errors[:5]:  # Показываем первые 5 ошибок
-                    messages.warning(request, error)
-                if len(errors) > 5:
-                    messages.warning(request, f'...и еще {len(errors) - 5} ошибок')
+                error_msg = f'Найдено {len(errors)} ошибок. Первые 5:'
+                messages.error(request, error_msg)
+                for error in errors[:5]:
+                    messages.error(request, error)
+
+                # Запись всех ошибок в лог
+                logger.error(f"Ошибки при загрузке файла {file.name}: {errors}")
 
             return redirect('shift_assignment:list')
 
         except Exception as e:
-            messages.error(request, f'Ошибка обработки файла: {str(e)}')
+            logger.exception("Ошибка обработки файла")
+            messages.error(
+                request,
+                f'Ошибка обработки файла: {str(e)}. '
+                'Проверьте формат файла и скачайте пример.'
+            )
             return render(request, template_name, context)
 
     return render(request, template_name, context)
+
+
+@login_required
+def complete_assignment(request, pk):
+    """
+    Обработка отметки о выполнении задания
+    Доступно только оператору для своих заданий
+    """
+    assignment = get_object_or_404(ShiftAssignment, pk=pk)
+    success, message = assignment.complete(request.user)
+
+    if success:
+        messages.success(request, message)
+    else:
+        messages.error(request, message)
+
+    # Перенаправляем обратно на страницу профиля пользователя
+    return redirect('users:profile', username=request.user.username)
