@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h3>Детали задания #{{ object.id }}</h3>
+        </div>
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <p><strong>Оператор:</strong> {{ object.operator.get_full_name }}</p>
+                    <p><strong>Деталь:</strong> {{ object.part }}</p>
+                    <p><strong>Заказ:</strong> {{ object.order }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Дата:</strong> {{ object.date|date:"d.m.Y" }}</p>
+                    <p><strong>Количество:</strong> {{ object.quantity }}</p>
+                    <p><strong>Статус:</strong>
+                        <span class="badge bg-{% if object.execution_status %}success{% else %}warning{% endif %}">
+                            {% if object.execution_status %}Выполнено{% else %}В работе{% endif %}
+                        </span>
+                    </p>
+                </div>
+            </div>
+
+            <div class="border-top pt-3">
+                <h5>Комментарий</h5>
+                <p>{{ object.comment|default:"Нет комментария" }}</p>
+            </div>
+        </div>
+        <div class="card-footer">
+            {% if request.user.role == 'master' or request.user.role == 'director' %}
+            <div class="btn-group">
+                <a href="{% url 'shift_assignment:update' object.id %}" class="btn btn-warning">
+                    <i class="bi bi-pencil"></i> Редактировать
+                </a>
+                <a href="{% url 'shift_assignment:delete' object.id %}" class="btn btn-danger">
+                    <i class="bi bi-trash"></i> Удалить
+                </a>
+            </div>
+            {% elif request.user.role == 'operator' and not object.execution_status %}
+            <form method="post" action="{% url 'shift_assignment:complete' object.id %}" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-success">
+                    <i class="bi bi-check-circle"></i> Задание выполнено
+                </button>
+            </form>
+            {% endif %}
+            <a href="{% url 'users:profile' request.user.username %}" class="btn btn-secondary float-end">
+                <i class="bi bi-arrow-left"></i> Назад к профилю
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

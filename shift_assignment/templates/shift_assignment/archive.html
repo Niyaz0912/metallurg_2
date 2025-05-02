@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>{{ title }}</h2>
+        <a href="{% url 'shift_assignment:list' %}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left"></i> К активным заданиям
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            {% if archived_shifts %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Дата выполнения</th>
+                            <th>Оператор</th>
+                            <th>Деталь</th>
+                            <th>Кол-во</th>
+                            <th>Дата создания</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for shift in archived_shifts %}
+                        <tr>
+                            <td>{{ shift.completed_at|date:"d.m.Y H:i" }}</td>
+                            <td>{{ shift.operator.get_full_name }}</td>
+                            <td>{{ shift.part }}</td>
+                            <td>{{ shift.quantity }}</td>
+                            <td>{{ shift.created_at|date:"d.m.Y" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info">Архив выполненных заданий пуст</div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% include 'includes/pagination.html' %}
+</div>
+{% endblock %}

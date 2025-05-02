@@ -1,41 +1,36 @@
 {% extends 'base.html' %}
-{% load static %}
-
-{% block title %}Загрузка сменных заданий{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
+<div class="container mt-4">
     <div class="card">
-        <div class="card-header bg-primary text-white">
-            <h2><i class="bi bi-upload"></i> Загрузка сменных заданий</h2>
+        <div class="card-header">
+            <h4>{{ title }}</h4>
         </div>
         <div class="card-body">
             <div class="alert alert-info">
-                <h5>Требования к файлу Excel:</h5>
+                <h5>Требования к файлу:</h5>
                 <ul>
                     {% for col in example_columns %}
-                        <li>{{ col }}</li>
+                    <li>{{ col }}</li>
                     {% endfor %}
                 </ul>
-                <p class="mb-0">
-                    <a href="{% static 'shift_assignment/example.xlsx' %}" download class="btn btn-sm btn-outline-info">
-                        <i class="bi bi-download"></i> Скачать пример файла
-                    </a>
-                </p>
+                <a href="#" class="btn btn-sm btn-outline-primary">Скачать шаблон</a>
             </div>
 
-            <form method="post" enctype="multipart/form-data" class="mt-4">
+            <form method="post" enctype="multipart/form-data">
                 {% csrf_token %}
                 <div class="mb-3">
-                    <label for="file" class="form-label">Выберите файл Excel:</label>
-                    <input type="file" class="form-control" id="file" name="file" accept=".xls,.xlsx" required>
+                    <label for="file" class="form-label">Файл Excel</label>
+                    <input type="file" class="form-control" id="file" name="file" accept=".xlsx, .xls" required>
                 </div>
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-upload"></i> Загрузить
-                </button>
-                <a href="{% url 'shift_assignment:list' %}" class="btn btn-secondary">
-                    <i class="bi bi-arrow-left"></i> Назад к списку
-                </a>
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'shift_assignment:list' %}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Назад
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-upload"></i> Загрузить
+                    </button>
+                </div>
             </form>
         </div>
     </div>
