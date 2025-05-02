@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'crispy_forms',
     # 'debug_toolbar',
 
     # Custom apps
@@ -47,6 +48,8 @@ MIDDLEWARE = [
     # 'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
 
+CRISPY_TEMPLATE_PACK = 'bootstrap4'  # или 'bootstrap3', 'uni-form' и т.д.
+
 INTERNAL_IPS = ['127.0.0.1']
 
 # Настройки перенаправлений
@@ -59,7 +62,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
