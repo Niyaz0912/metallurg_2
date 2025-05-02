@@ -1,5 +1,11 @@
 from django.contrib.auth.views import LoginView, LogoutView
-from django.views.generic import CreateView, DetailView, UpdateView, TemplateView, RedirectView
+from django.views.generic import (
+    CreateView,
+    DetailView,
+    UpdateView,
+    TemplateView,
+    RedirectView
+)
 from django.urls import reverse_lazy, reverse
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied
@@ -61,21 +67,24 @@ class ProfileView(LoginRequiredMixin, DetailView):
         profile_user = self.get_object()
 
         if user.role == 'operator' and user == profile_user:
-            context['current_assignment'] = ShiftAssignment.objects.filter(
-                operator=user,
+            context['active_assignments'] = ShiftAssignment.objects.filter(
+                operator_id=user.username,
                 execution_status=False
-            ).first()
-        elif user.role == 'master':
+            ).order_by('-date')
+
+            context['completed_assignments'] = ShiftAssignment.objects.filter(
+                operator_id=user.username,
+                execution_status=True
+            ).order_by('-completed_at')[:10]
+
+        elif user.role in ['master', 'director']:
             context['active_assignments'] = ShiftAssignment.objects.filter(
                 execution_status=False
-            ).select_related('operator').order_by('-date')[:5]
-        elif user.role in ['admin', 'director']:
-            context['active_plans'] = ProductionPlan.objects.filter(
-                is_completed=False
-            ).order_by('-deadline')[:5]
-            context['upcoming_supplies'] = Supply.objects.filter(
-                status='upcoming'
-            ).order_by('expected_date')[:5]
+            ).order_by('-date')
+
+            context['completed_assignments'] = ShiftAssignment.objects.filter(
+                execution_status=True
+            ).order_by('-completed_at')[:10]
 
         return context
 
