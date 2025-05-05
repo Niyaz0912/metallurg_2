@@ -36,12 +36,7 @@ class CustomLoginView(LoginView):
     redirect_authenticated_user = True
 
     def get_success_url(self):
-        user = self.request.user
-        if user.role == 'admin':
-            return reverse_lazy('admin:index')
-        elif user.role in ['director', 'master']:
-            return reverse_lazy('production_plan:list')
-        return reverse_lazy('users:profile', kwargs={'username': user.username})
+        return reverse_lazy('users:profile', kwargs={'username': self.request.user.username})
 
 
 class CustomLogoutView(LogoutView):
