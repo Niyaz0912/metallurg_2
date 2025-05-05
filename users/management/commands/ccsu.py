@@ -11,7 +11,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         users_data = [
             {
-                'username': 'admin@company.com',
+                'username': 'admin',
                 'email': 'admin@company.com',
                 'first_name': 'Администратор',
                 'last_name': 'Системный',
@@ -22,7 +22,7 @@ class Command(BaseCommand):
                 'is_active': True
             },
             {
-                'username': 'director@company.com',
+                'username': 'director',
                 'email': 'director@company.com',
                 'first_name': 'Директор',
                 'last_name': 'Главный',
@@ -33,7 +33,7 @@ class Command(BaseCommand):
                 'is_active': True
             },
             {
-                'username': 'master@company.com',
+                'username': 'master',
                 'email': 'master@company.com',
                 'first_name': 'Мастер',
                 'last_name': 'Управляющий',
@@ -44,7 +44,7 @@ class Command(BaseCommand):
                 'is_active': True
             },
             {
-                'username': 'operator@company.com',
+                'username': 'operator',
                 'email': 'operator@company.com',
                 'first_name': 'Оператор',
                 'last_name': 'Сменный',
@@ -55,7 +55,7 @@ class Command(BaseCommand):
                 'is_active': True
             },
             {
-                'username': 'employee@company.com',
+                'username': 'employee',
                 'email': 'employee@company.com',
                 'first_name': 'Сотрудник',
                 'last_name': 'Обычный',
