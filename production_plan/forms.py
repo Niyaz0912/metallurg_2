@@ -10,14 +10,15 @@ class StyleFormMixin:
 
 
 class ProductionPlanForm(StyleFormMixin, forms.ModelForm):
-    deadline = forms.DateTimeField(
-        widget=forms.DateTimeInput(attrs={'type': 'datetime-local'}),
-        label='Срок отгрузки'
-    )
-
     class Meta:
         model = ProductionPlan
-        fields = ['customer', 'order', 'product', 'quantity', 'plan', 'progress', 'deadline']
+        fields = ['customer', 'order', 'product', 'quantity', 'deadline']  # и другие поля
+
+    def clean_deadline(self):
+        deadline = self.cleaned_data.get('deadline')
+        if not deadline:
+            raise forms.ValidationError("Это поле обязательно")
+        return deadline
 
 
 class SupplyForm(StyleFormMixin, forms.ModelForm):
