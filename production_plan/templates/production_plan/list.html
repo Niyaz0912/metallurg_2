@@ -1,28 +1,55 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h1>Список производственных планов</h1>
+<div class="container mt-4">
+    <h1 class="mb-4">Список производственных планов</h1>
 
-<div class="row">
-    {% for plan in object_list %}
-        <div class="col-md-4">
-            <div class="card mb-3">
-                <div class="card-body">
-                    <h5 class="card-title">{{ plan.order }} для {{ plan.customer }}</h5>
-                    <p class="card-text">Изделие: {{ plan.product }}</p>
-                    <p class="card-text">Количество: {{ plan.quantity }}</p>
-                    <p class="card-text">Прогресс: {{ plan.progress }}%</p>
-                    <p class="card-text">Дедлайн: {{ plan.deadline }}</p>
-                    {% if user.is_authenticated and user.role == 'admin' or user.role == 'director' %}
-                    <a href="{% url 'production_plan:detail' plan.pk %}" class="btn btn-primary">Подробнее</a>
-                    {% endif %}
+    <div class="row">
+        {% for plan in object_list %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">{{ plan.order }} ({{ plan.customer }})</h5>
+                        <div class="card-text mb-2">
+                            <p><strong>Изделие:</strong> {{ plan.product }}</p>
+                            <p><strong>Количество:</strong> {{ plan.quantity }} шт.</p>
+                            <div class="progress mb-2">
+                                <div class="progress-bar" role="progressbar"
+                                     style="width: {{ plan.progress }}%"
+                                     aria-valuenow="{{ plan.progress }}"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100">
+                                    {{ plan.progress }}%
+                                </div>
+                            </div>
+                            <p><strong>Дедлайн:</strong> {{ plan.deadline|date:"d.m.Y" }}</p>
+                        </div>
+                        {% if user.is_authenticated and user.role in 'admin director' %}
+                            <div class="mt-auto">
+                                <a href="{% url 'production_plan:detail' plan.pk %}"
+                                   class="btn btn-primary btn-sm">
+                                    Подробнее
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
-        </div>
-    {% endfor %}
-</div>
+        {% empty %}
+            <div class="col-12">
+                <div class="alert alert-info">
+                    Нет доступных производственных планов
+                </div>
+            </div>
+        {% endfor %}
+    </div>
 
-{% if user.is_authenticated and user.role in 'admin director' %}
-    <a href="{% url 'production_plan:create' %}" class="btn btn-success">Создать новый план</a>
-{% endif %}
+    {% if user.is_authenticated and user.role in 'admin director' %}
+        <div class="mt-3">
+            <a href="{% url 'production_plan:create' %}" class="btn btn-success">
+                <i class="bi bi-plus-circle"></i> Создать новый план
+            </a>
+        </div>
+    {% endif %}
+</div>
 {% endblock %}
