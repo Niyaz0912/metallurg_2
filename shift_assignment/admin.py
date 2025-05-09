@@ -3,68 +3,31 @@ from .models import ShiftAssignment, ShiftAssignmentArchive
 
 
 class ShiftAssignmentAdmin(admin.ModelAdmin):
-    """Административный интерфейс для модели сменных заданий"""
-    list_display = (
-        'id', 'customer', 'date', 'machine_number', 'operator',
-        'quantity', 'execution_status'
-    )
-    list_filter = (
-        'execution_status', 'date', 'machine_number', 'operator'
-    )
-    search_fields = (
-        'customer', 'operator__username'
-    )
-    readonly_fields = ('created_at', 'updated_at')
-    fieldsets = (
-        ('Основная информация', {
-            'fields': (
-                'customer', 'date', 'machine_number', 'operator',
-                'quantity', 'part_blueprint'
-            )
-        }),
-        ('Дополнительно', {
-            'fields': (
-                'execution_status', 'comment',
-                'created_at', 'updated_at'
-            )
-        }),
-    )
+    list_display = ('get_customer', 'shift_date', 'planned_quantity', 'status')
+
+    def get_customer(self, obj):
+        # Предполагается, что у production_plan есть поле customer
+        return obj.production_plan.customer if obj.production_plan else '-'
+
+    get_customer.short_description = 'Клиент'
+    get_customer.admin_order_field = 'production_plan__customer'
+
+    list_filter = ('status', 'shift_date')
 
 
 class ShiftAssignmentArchiveAdmin(admin.ModelAdmin):
-    """Административный интерфейс для архива сменных заданий"""
     list_display = (
-        'original_id', 'customer', 'date', 'machine_number', 'operator',
-        'order', 'part', 'quantity', 'actual_quantity',
-        'quality_check', 'completed_at'
+        'get_customer', 'shift_date', 'planned_quantity', 'quality_status', 'archived_at'
     )
-    list_filter = (
-        'date', 'machine_number', 'operator', 'quality_check'
-    )
-    search_fields = (
-        'customer', 'order', 'part', 'operator__username'
-    )
-    readonly_fields = (
-        'original_id', 'completed_at'  # Убрали shift_duration
-    )
-    fieldsets = (
-        ('Основная информация', {
-            'fields': (
-                'original_id', 'customer', 'date', 'machine_number',
-                'operator', 'order', 'part', 'quantity', 'part_blueprint'
-            )
-        }),
-        ('Результаты выполнения', {
-            'fields': (
-                'actual_quantity', 'quality_check'  # Убрали shift_duration
-            )
-        }),
-        ('Дополнительно', {
-            'fields': (
-                'comment', 'completed_at'
-            )
-        }),
-    )
+
+    def get_customer(self, obj):
+        return obj.production_plan.customer if obj.production_plan else '-'
+
+    get_customer.short_description = 'Клиент'
+    get_customer.admin_order_field = 'production_plan__customer'
+
+    list_filter = ('shift_date', 'quality_status')
+    readonly_fields = ('archived_at',)
 
 
 admin.site.register(ShiftAssignment, ShiftAssignmentAdmin)

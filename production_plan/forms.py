@@ -1,5 +1,5 @@
 from django import forms
-from .models import ProductionPlan, Supply
+from .models import ProductionPlan
 
 
 class StyleFormMixin:
@@ -21,17 +21,3 @@ class ProductionPlanForm(StyleFormMixin, forms.ModelForm):
         return deadline
 
 
-class SupplyForm(StyleFormMixin, forms.ModelForm):
-    expected_date = forms.DateField(
-        widget=forms.DateInput(attrs={'type': 'date'}),
-        label='Ожидаемая дата поставки'
-    )
-    received_date = forms.DateField(
-        required=False,
-        widget=forms.DateInput(attrs={'type': 'date'}),
-        label='Дата получения'
-    )
-
-    class Meta:
-        model = Supply
-        fields = ['name', 'quantity', 'expected_date', 'received_date', 'status']

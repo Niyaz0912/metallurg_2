@@ -14,7 +14,6 @@ from django.shortcuts import get_object_or_404
 
 from .forms import RegistrationForm, UserUpdateForm
 from .models import User
-from production_plan.models import ProductionPlan, Supply
 from shift_assignment.models import ShiftAssignment
 
 
@@ -63,22 +62,22 @@ class ProfileView(LoginRequiredMixin, DetailView):
 
         if user.role == 'operator' and user == profile_user:
             context['active_assignments'] = ShiftAssignment.objects.filter(
-                operator_id=user.username,
-                execution_status=False
-            ).order_by('-date')
+                operator__username=user.username,
+                status=False
+            ).order_by('-shift_date')
 
             context['completed_assignments'] = ShiftAssignment.objects.filter(
-                operator_id=user.username,
-                execution_status=True
+                operator__username=user.username,
+                status=True
             ).order_by('-completed_at')[:10]
 
         elif user.role in ['master', 'director']:
             context['active_assignments'] = ShiftAssignment.objects.filter(
-                execution_status=False
-            ).order_by('-date')
+                status=False
+            ).order_by('-shift_date')
 
             context['completed_assignments'] = ShiftAssignment.objects.filter(
-                execution_status=True
+                status=True
             ).order_by('-completed_at')[:10]
 
         return context
@@ -121,11 +120,11 @@ class ShiftArchiveView(LoginRequiredMixin, DetailView):
         if user.role == 'operator' and user == profile_user:
             context['assignments'] = ShiftAssignment.objects.filter(
                 operator=user
-            ).order_by('-date')[:20]
+            ).order_by('-shift_date')[:20]
         elif user.role in ['master', 'director', 'admin']:
             context['assignments'] = ShiftAssignment.objects.select_related(
                 'operator'
-            ).order_by('-date')[:50]
+            ).order_by('-shift_date')[:50]
 
         return context
 

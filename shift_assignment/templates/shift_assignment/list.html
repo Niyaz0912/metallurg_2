@@ -37,8 +37,8 @@
                             <td>{{ assignment.part }}</td>
                             <td>{{ assignment.quantity }}</td>
                             <td>
-                                <span class="badge bg-{% if assignment.execution_status %}success{% else %}warning{% endif %}">
-                                    {{ assignment.get_execution_status_display }}
+                                <span class="badge bg-{% if assignment.status %}success{% else %}warning{% endif %}">
+                                    {{ assignment.get_status_display }}
                                 </span>
                             </td>
                             <td>

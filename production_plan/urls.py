@@ -1,14 +1,20 @@
 from django.urls import path
-from . import views
-from .views import DashboardView
+from .views import (
+    ProductionPlanListView,
+    ProductionPlanCreateView,
+    ProductionPlanUpdateView,
+    ProductionPlanDeleteView,
+    ProductionPlanDetailView,
+    # upload_production_plans удалён
+)
 
 app_name = 'production_plan'
 
 urlpatterns = [
-    path('dashboard/', DashboardView.as_view(), name='dashboard'),
-    path('', views.ProductionPlanListView.as_view(), name='list'),
-    path('create/', views.ProductionPlanCreateView.as_view(), name='create'),
-    path('update/<int:pk>/', views.ProductionPlanUpdateView.as_view(), name='update'),
-    path('delete/<int:pk>/', views.ProductionPlanDeleteView.as_view(), name='delete'),
-    path('detail/<int:pk>/', views.ProductionPlanDetailView.as_view(), name='detail'),
+    path('', ProductionPlanListView.as_view(), name='list'),
+    path('create/', ProductionPlanCreateView.as_view(), name='create'),
+    path('<int:pk>/', ProductionPlanDetailView.as_view(), name='detail'),
+    path('<int:pk>/update/', ProductionPlanUpdateView.as_view(), name='update'),
+    path('<int:pk>/delete/', ProductionPlanDeleteView.as_view(), name='delete'),
+    # path('upload/', upload_production_plans, name='upload'),  # удалено
 ]

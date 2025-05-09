@@ -1,6 +1,6 @@
 from django import forms
-from .models import ShiftAssignment
 from django.contrib.auth import get_user_model
+from .models import ShiftAssignment
 
 User = get_user_model()
 
@@ -16,31 +16,30 @@ class ShiftAssignmentForm(StyleFormMixin, forms.ModelForm):
     class Meta:
         model = ShiftAssignment
         fields = [
-            'customer',
-            'date',
-            'machine_number',
+            'production_plan',
+            'shift_date',
+            'shift_type',
+            'machine_number',  # временное поле вместо machine
             'operator',
-            'part_blueprint',
-            'execution_status',
-            'comment',
-            'quantity',
+            'planned_quantity',
+            'status',
+            'drawing',
+            'notes',
         ]
+        widgets = {
+            'shift_date': forms.DateInput(attrs={'type': 'date'}),
+            'notes': forms.Textarea(attrs={'rows': 3}),
+        }
 
 
 class UpdateShiftAssignmentForm(StyleFormMixin, forms.ModelForm):
     class Meta:
         model = ShiftAssignment
-        fields = ['quantity', 'execution_status', 'comment']
-
-
-# class MachineStatusForm(StyleFormMixin, forms.ModelForm):
-#     breakdown_time = forms.DateTimeField(
-#         required=False,
-#         widget=forms.DateTimeInput(attrs={'type': 'datetime-local'}),
-#         label='Дата и время поломки'
-#     )
-#
-#     class Meta:
-#         model = MachineStatus
-#         fields = ['machine_number', 'status', 'breakdown_time', 'notes']
-#
+        fields = [
+            'actual_quantity',
+            'status',
+            'notes',
+        ]
+        widgets = {
+            'notes': forms.Textarea(attrs={'rows': 3}),
+        }
