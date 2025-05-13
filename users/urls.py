@@ -1,7 +1,7 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
-from .views import CustomLoginView, RegisterView, LegacyProfileRedirectView
+from .views import CustomLoginView, RegisterView, LegacyProfileRedirectView, OperatorListView
 
 app_name = 'users'
 
@@ -20,5 +20,7 @@ urlpatterns = [
     path('shift_archive/<int:pk>/', views.LegacyShiftArchiveRedirectView.as_view(), name='legacy_shift_archive'),
 
     path('shift_schedule/', views.ShiftScheduleView.as_view(), name='shift_schedule'),
+    path('operators/', OperatorListView.as_view(), name='operator_list'),
 ]
+
 

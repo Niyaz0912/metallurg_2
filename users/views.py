@@ -1,3 +1,5 @@
+
+from django.views.generic import ListView
 from django.contrib.auth.views import LoginView, LogoutView
 from django.views.generic import (
     CreateView,
@@ -155,3 +157,13 @@ class ShiftScheduleView(LoginRequiredMixin, TemplateView):
             ).select_related('operator').order_by('date', 'machine_number')[:14]
 
         return context
+
+
+class OperatorListView(ListView):
+    model = User
+    template_name = 'users/operator_list.html'  # создадим этот шаблон
+    context_object_name = 'operators'
+
+    def get_queryset(self):
+        # Возвращаем только пользователей с ролью 'operator'
+        return User.objects.filter(role='operator').order_by('username')

@@ -183,6 +183,49 @@ footer {
     }
 }
 
+.table {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  overflow: hidden;
+  font-family: Arial, sans-serif;
+}
+
+.table-row {
+  display: flex;
+  border-bottom: 1px solid #ccc;
+}
+
+.table-row.table-header {
+  background-color: #f0f0f0;
+  font-weight: bold;
+}
+
+.table-cell {
+  flex: 1; /* равная ширина ячеек */
+  padding: 8px 12px;
+  border-right: 1px solid #ccc;
+  box-sizing: border-box;
+  word-break: break-word;
+}
+
+/* Убираем правую границу у последней ячейки в строке */
+.table-row .table-cell:last-child {
+  border-right: none;
+}
+
+/* Можно задать разные пропорции ширины ячеек */
+.table-cell:nth-child(1) { flex: 2; } /* Название заказа шире */
+.table-cell:nth-child(4), /* Количество */
+.table-cell:nth-child(5), /* Прогресс */
+.table-cell:nth-child(6)  /* Дедлайн */ {
+  flex: 1;
+  text-align: center;
+}
+
+
 /* Вариант 1 Минималистичный светлый:
 :root {
   --primary: #2563eb;

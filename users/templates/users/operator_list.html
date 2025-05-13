@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Список операторов</h2>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Имя пользователя</th>
+                <th>ФИО</th>
+                <th>Email</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for operator in operators %}
+            <tr>
+                <td>{{ operator.username }}</td>
+                <td>{{ operator.get_full_name }}</td>
+                <td>{{ operator.email }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3">Операторы не найдены</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <a href="{% url 'shift_assignment:list' %}" class="btn btn-secondary">Назад к заданиям</a>
+</div>
+{% endblock %}

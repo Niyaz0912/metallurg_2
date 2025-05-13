@@ -5,12 +5,17 @@
 <div class="container mt-4">
     <h1 class="mb-4">Список производственных планов</h1>
 
-    {% if user.is_authenticated and user.role in 'admin director' %}
-    <div class="mb-3">
-        <a href="{% url 'production_plan:create' %}" class="btn btn-success">
-            <i class="bi bi-plus-circle"></i> Создать новый план
-        </a>
-    </div>
+    {% if user.is_authenticated %}
+        {% if user.role == 'admin' or user.role == 'director' %}
+            <div class="mb-3">
+                <a href="{% url 'production_plan:create' %}" class="btn btn-success">
+                    <i class="bi bi-plus-circle"></i> Создать новый план
+                </a>
+                <a href="{% url 'production_plan:upload' %}" class="btn btn-info ms-2">
+                    <i class="bi bi-upload"></i> Загрузить из Excel
+                </a>
+            </div>
+        {% endif %}
     {% endif %}
 
     <div class="row">
@@ -18,10 +23,13 @@
         <div class="col-md-4 mb-4">
             <div class="card h-100">
                 <div class="card-body d-flex flex-column">
-                    <h5 class="card-title">{{ plan.order }} ({{ plan.customer }})</h5>
+                    <h5 class="card-title">{{ plan.order_name }} ({{ plan.customer }})</h5>
                     <div class="card-text mb-2">
                         <p><strong>Изделие:</strong> {{ plan.product }}</p>
                         <p><strong>Количество:</strong> {{ plan.quantity }} шт.</p>
+                        {% if plan.drawing_number %}
+                            <p><strong>Чертеж/Модель:</strong> {{ plan.drawing_number }}</p>
+                        {% endif %}
                         <div class="progress mb-2">
                             <div class="progress-bar" role="progressbar"
                                  style="width: {{ plan.progress }}%"
@@ -33,13 +41,19 @@
                         </div>
                         <p><strong>Дедлайн:</strong> {{ plan.deadline|date:"d.m.Y" }}</p>
                     </div>
-                    {% if user.is_authenticated and user.role in 'admin director' %}
-                    <div class="mt-auto">
-                        <a href="{% url 'production_plan:detail' plan.pk %}"
-                           class="btn btn-primary btn-sm">
-                            Подробнее
-                        </a>
-                    </div>
+                    {% if user.is_authenticated %}
+                        {% if user.role == 'admin' or user.role == 'director' %}
+                            <div class="mt-auto">
+                                <a href="{% url 'production_plan:detail' plan.pk %}"
+                                   class="btn btn-primary btn-sm">
+                                    Подробнее
+                                </a>
+                                <a href="{% url 'production_plan:update' plan.pk %}"
+                                   class="btn btn-warning btn-sm ms-1">
+                                    Редактировать
+                                </a>
+                            </div>
+                        {% endif %}
                     {% endif %}
                 </div>
             </div>
@@ -56,5 +70,12 @@
 {% endblock %}
 
 {% block scripts %}
-<!-- Удалён весь JS, связанный с загрузкой Excel -->
+<!-- Можно добавить скрипты для динамического обновления прогресса -->
+<script>
+// Пример: автоматическое обновление прогресса каждые 30 секунд
+setInterval(() => {
+    window.location.reload();
+}, 30000);
+</script>
 {% endblock %}
+

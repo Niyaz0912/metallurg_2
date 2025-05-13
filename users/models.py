@@ -4,7 +4,6 @@ from django.utils.translation import gettext_lazy as _
 
 
 class UserRoles(models.TextChoices):
-    """Роли пользователей в системе"""
     EMPLOYEE = 'employee', _('Сотрудник')
     OPERATOR = 'operator', _('Оператор')
     MASTER = 'master', _('Мастер')
@@ -24,7 +23,7 @@ class User(AbstractUser):
         },
     )
     role = models.CharField(
-        max_length=255,
+        max_length=20,
         choices=UserRoles.choices,
         default=UserRoles.OPERATOR,
         verbose_name=_('Роль')
@@ -37,21 +36,18 @@ class User(AbstractUser):
     )
 
     USERNAME_FIELD = 'username'
-    REQUIRED_FIELDS = ['first_name', 'last_name', 'role', 'phone']
+    REQUIRED_FIELDS = ['first_name', 'last_name', 'role']
 
     def __str__(self):
         return f'{self.get_full_name()} ({self.get_role_display()})'
 
-    def get_role_display(self):
-        return dict(UserRoles.choices)[self.role]
-
     @property
     def is_master(self):
-        return self.role == 'master'  # Исправлено: прямое сравнение со строкой
+        return self.role == UserRoles.MASTER
 
     @property
     def is_operator(self):
-        return self.role == 'operator'  # Исправлено: прямое сравнение со строкой
+        return self.role == UserRoles.OPERATOR
 
     class Meta:
         verbose_name = _('Пользователь')

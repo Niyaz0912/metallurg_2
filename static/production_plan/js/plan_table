@@ -1,0 +1,118 @@
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('planForm');
+    const tableBody = document.getElementById('planTableBody');
+    const addRowBtn = document.getElementById('addRowBtn');
+    const saveBtn = document.getElementById('saveBtn');
+
+    // Функция добавления строки в таблицу
+    function addRow() {
+        // Получаем значения из формы
+        const orderName = form.order_name.value.trim();
+        const customer = form.customer.value.trim();
+        const product = form.product.value.trim();
+        const quantity = form.quantity.value;
+        const progress = form.progress.value;
+        const deadline = form.deadline.value;
+
+        if (!orderName || !customer || !product || !quantity || !progress || !deadline) {
+            alert('Пожалуйста, заполните все поля!');
+            return;
+        }
+
+        // Создаем строку таблицы
+        const tr = document.createElement('tr');
+
+        tr.innerHTML = `
+            <td>${orderName}</td>
+            <td>${customer}</td>
+            <td>${product}</td>
+            <td>${quantity}</td>
+            <td>${progress}</td>
+            <td>${deadline}</td>
+            <td><button type="button" class="btn btn-danger btn-sm remove-row">Удалить</button></td>
+        `;
+
+        // Добавляем строку в тело таблицы
+        tableBody.appendChild(tr);
+
+        // Очищаем форму
+        form.reset();
+        form.order_name.focus();
+    }
+
+    // Обработчик кнопки добавления строки
+    addRowBtn.addEventListener('click', addRow);
+
+    // Делегирование события для удаления строки
+    tableBody.addEventListener('click', function(event) {
+        if (event.target.classList.contains('remove-row')) {
+            event.target.closest('tr').remove();
+        }
+    });
+
+    // Обработчик кнопки сохранения всех данных
+    saveBtn.addEventListener('click', function() {
+        const rows = tableBody.querySelectorAll('tr');
+        if (rows.length === 0) {
+            alert('Нет строк для сохранения!');
+            return;
+        }
+
+        // Собираем данные из таблицы
+        const data = [];
+        rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            data.push({
+                order_name: cells[0].textContent,
+                customer: cells[1].textContent,
+                product: cells[2].textContent,
+                quantity: parseInt(cells[3].textContent),
+                progress: parseInt(cells[4].textContent),
+                deadline: cells[5].textContent,
+            });
+        });
+
+        // Отправляем данные на сервер
+        fetch("{% url 'production_plan:api_save' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken'),
+            },
+            body: JSON.stringify({data: data})
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Ошибка сети');
+            return response.json();
+        })
+        .then(result => {
+            if (result.status === 'success') {
+                alert('Данные успешно сохранены!');
+                // Можно очистить таблицу или обновить страницу
+                tableBody.innerHTML = '';
+            } else {
+                alert('Ошибка при сохранении: ' + result.message);
+            }
+        })
+        .catch(error => {
+            alert('Ошибка при сохранении: ' + error.message);
+        });
+    });
+
+    // Функция для получения CSRF токена из cookie
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                // Проверяем, начинается ли cookie с нужного имени
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+});

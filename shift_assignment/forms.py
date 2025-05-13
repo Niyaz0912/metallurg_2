@@ -43,3 +43,7 @@ class UpdateShiftAssignmentForm(StyleFormMixin, forms.ModelForm):
         widgets = {
             'notes': forms.Textarea(attrs={'rows': 3}),
         }
+
+
+class ExcelUploadForm(forms.Form):
+    excel_file = forms.FileField(label='Выберите Excel файл')

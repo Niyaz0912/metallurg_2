@@ -1,12 +1,25 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
 {% block content %}
-<h1>Создать производственный план</h1>
+  <h2>{% if form.instance.pk %}Редактировать{% else %}Создать{% endif %} производственный план</h2>
 
-<form method="post" enctype="multipart/form-data">
+  <form method="post" novalidate>
     {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn btn-success">Создать</button>
-    <a href="{% url 'production_plan:list' %}" class="btn btn-secondary">Отмена</a>
-</form>
+    {{ form.non_field_errors }}
+
+    {% for field in form %}
+      <div class="mb-3">
+        <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}
+          <div class="form-text">{{ field.help_text }}</div>
+        {% endif %}
+        {% for error in field.errors %}
+          <div class="text-danger">{{ error }}</div>
+        {% endfor %}
+      </div>
+    {% endfor %}
+
+    <button type="submit" class="btn btn-primary">Сохранить</button>
+  </form>
 {% endblock %}

@@ -1,11 +1,11 @@
 from django.urls import path
 from .views import (
     ProductionPlanListView,
-    ProductionPlanCreateView,
     ProductionPlanUpdateView,
     ProductionPlanDeleteView,
     ProductionPlanDetailView,
-    # upload_production_plans удалён
+    ProductionPlanCreateView,
+    ProductionPlanUploadView, download_production_plan_template,
 )
 
 app_name = 'production_plan'
@@ -13,8 +13,9 @@ app_name = 'production_plan'
 urlpatterns = [
     path('', ProductionPlanListView.as_view(), name='list'),
     path('create/', ProductionPlanCreateView.as_view(), name='create'),
-    path('<int:pk>/', ProductionPlanDetailView.as_view(), name='detail'),
-    path('<int:pk>/update/', ProductionPlanUpdateView.as_view(), name='update'),
-    path('<int:pk>/delete/', ProductionPlanDeleteView.as_view(), name='delete'),
-    # path('upload/', upload_production_plans, name='upload'),  # удалено
+    path('update/<int:pk>/', ProductionPlanUpdateView.as_view(), name='update'),
+    path('delete/<int:pk>/', ProductionPlanDeleteView.as_view(), name='delete'),
+    path('detail/<int:pk>/', ProductionPlanDetailView.as_view(), name='detail'),
+    path('upload/', ProductionPlanUploadView.as_view(), name='upload'),
+    path('download_template/', download_production_plan_template, name='download_template'),
 ]

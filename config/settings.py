@@ -12,13 +12,15 @@ load_dotenv(dotenv_path=BASE_DIR / '.env')
 SECRET_KEY = os.getenv('SECRET_KEY', 'default-secret-key-for-development')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'True') == 'True'
+DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
 
+# Debug toolbar config (disabled by default)
 DEBUG_TOOLBAR_CONFIG = {
     'SHOW_TOOLBAR_CALLBACK': lambda request: False,  # Полностью отключает toolbar
 }
+
 # Application definition
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -27,8 +29,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    # Third-party apps
     'crispy_forms',
-    # 'debug_toolbar',
+    'crispy_bootstrap4',
+    'django_tables2',
+    # 'debug_toolbar',  # Раскомментируйте при необходимости
 
     # Custom apps
     'users',
@@ -44,17 +50,20 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
     'config.middleware.AuthRedirectMiddleware',
-    # 'debug_toolbar.middleware.DebugToolbarMiddleware',
+    # 'debug_toolbar.middleware.DebugToolbarMiddleware',  # Раскомментируйте при необходимости
 ]
 
-CRISPY_TEMPLATE_PACK = 'bootstrap4'  # или 'bootstrap3', 'uni-form' и т.д.
+# Crispy Forms settings
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"
+CRISPY_TEMPLATE_PACK = "bootstrap4"
 
 INTERNAL_IPS = ['127.0.0.1']
 
-# Настройки перенаправлений
+# Redirect URLs
 LOGIN_URL = 'login'
-LOGIN_REDIRECT_URL = 'production:list'  # Дефолтный редирект
+LOGIN_REDIRECT_URL = 'production_plan:list'  # Исправлено с 'production:list' на 'production_plan:list'
 LOGOUT_REDIRECT_URL = 'login'
 
 ROOT_URLCONF = 'config.urls'
@@ -62,11 +71,11 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
+        'DIRS': [BASE_DIR / 'templates'],  # Папка для глобальных шаблонов
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
-                'django.template.context_processors.request',
+                'django.template.context_processors.request',  # Важно для django-tables2 и других
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
@@ -77,20 +86,14 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 # Database settings for PostgreSQL
-PG_USER = os.getenv('PG_USER')
-PG_PASSWORD = os.getenv('PG_PASSWORD')
-PG_HOST = os.getenv('PG_HOST')
-PG_PORT = os.getenv('PG_PORT')
-PG_DATABASE = os.getenv('PG_DATABASE')
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': PG_DATABASE,
-        'USER': PG_USER,
-        'PASSWORD': PG_PASSWORD,
-        'HOST': PG_HOST,
-        'PORT': PG_PORT,
+        'NAME': os.getenv('PG_DATABASE'),
+        'USER': os.getenv('PG_USER'),
+        'PASSWORD': os.getenv('PG_PASSWORD'),
+        'HOST': os.getenv('PG_HOST', 'localhost'),
+        'PORT': os.getenv('PG_PORT', '5432'),
     }
 }
 
@@ -108,18 +111,24 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# Internationalization settings
+# Internationalization
 LANGUAGE_CODE = 'ru-ru'
-TIME_ZONE = os.getenv('TIME_ZONE', default='Asia/Yekaterinburg')
+TIME_ZONE = os.getenv('TIME_ZONE', 'Asia/Yekaterinburg')
 USE_I18N = True
 USE_TZ = True
 
-# Static files settings
+# Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
+
+# Папка для дополнительных статических файлов (например, локальных)
 STATICFILES_DIRS = [BASE_DIR / 'static']
 
+# Папка, куда собираются все статики при collectstatic (для продакшна)
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Медиа файлы (загрузка пользователями)
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -127,27 +136,56 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Custom user model
 AUTH_USER_MODEL = 'users.User'
 
-LOGGING_DIR = os.path.join(BASE_DIR, 'logs')
-os.makedirs(LOGGING_DIR, exist_ok=True)
+# Логирование
+LOGGING_DIR = BASE_DIR / 'logs'
+LOGGING_DIR.mkdir(exist_ok=True)
 
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+            'level': 'INFO',
         },
-        'file': {
+        'file_errors': {
             'class': 'logging.FileHandler',
-            'filename': 'django_error.log',
+            'filename': LOGGING_DIR / 'django_error.log',
+            'formatter': 'verbose',
             'level': 'ERROR',
+            'encoding': 'utf-8',
         },
+        'file_assignments': {
+            'class': 'logging.FileHandler',
+            'filename': LOGGING_DIR / 'assignments.log',
+            'formatter': 'verbose',
+            'level': 'INFO',
+            'encoding': 'utf-8',
+        },
+
     },
     'loggers': {
         'django.request': {
-            'handlers': ['console', 'file'],
+            'handlers': ['console', 'file_errors'],
             'level': 'ERROR',
-            'propagate': True,
+            'propagate': False,
+        },
+        'shift_assignment': {
+            'handlers': ['console', 'file_assignments'],
+            'level': 'INFO',
+            'propagate': False,
         },
     },
 }
+

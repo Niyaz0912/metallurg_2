@@ -1,35 +1,36 @@
 import logging
-
-import pandas as pd
-from django.shortcuts import get_object_or_404, render, redirect
-from django.contrib.auth.decorators import login_required
+from datetime import timezone, datetime
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView, View
+from django.contrib.auth.decorators import login_required
+from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView, View, FormView
+from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse_lazy
-from django.contrib.auth import get_user_model
-from django.core.exceptions import PermissionDenied
-from django.utils import timezone
 from django.contrib import messages
+from django.http import JsonResponse
+from django.core.exceptions import PermissionDenied
 
+from production_plan.forms import ExcelUploadForm
 from .models import ShiftAssignment, ShiftAssignmentArchive
-from users.models import User
-from .forms import ShiftAssignmentForm, UpdateShiftAssignmentForm
-from django.utils.translation import gettext as _
+from production_plan.models import ProductionPlan
+from .forms import ShiftAssignmentForm
+from django.contrib.auth import get_user_model
 
-
+from django.http import HttpResponse
+import pandas as pd
+from io import BytesIO
 logger = logging.getLogger(__name__)
 User = get_user_model()
 
 
 class StaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
-    """Миксин для проверки ролей master и director"""
+    allowed_roles = ['master', 'director']
 
     def test_func(self):
-        return self.request.user.role in ['master', 'director']
+        return self.request.user.role in self.allowed_roles
 
     def handle_no_permission(self):
         if self.request.user.is_authenticated:
-            raise PermissionDenied("У вас нет прав для этого действия")
+            raise PermissionDenied("У вас нет прав для просмотра этой страницы")
         return super().handle_no_permission()
 
 
@@ -37,28 +38,19 @@ class ShiftAssignmentListView(LoginRequiredMixin, ListView):
     model = ShiftAssignment
     template_name = 'shift_assignment/list.html'
     context_object_name = 'assignments'
-    paginate_by = 20
 
     def get_queryset(self):
         user = self.request.user
 
         if user.role == 'operator':
-            # Для оператора - только его задания
             return ShiftAssignment.objects.filter(
-                operator_id=user.username,
-                status='active'
+                operator=user,
+                status__in=[ShiftAssignment.Status.PLANNED, ShiftAssignment.Status.IN_PROGRESS]
             ).order_by('-shift_date')
-
-        # Для мастеров/директоров - все активные задания
-        return ShiftAssignment.objects.filter(
-            status='active'
-        ).order_by('-shift_date')
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'Активные сменные задания'
-        context['can_edit'] = self.request.user.role in ['master', 'director']
-        return context
+        else:
+            return ShiftAssignment.objects.filter(
+                status__in=[ShiftAssignment.Status.PLANNED, ShiftAssignment.Status.IN_PROGRESS]
+            ).order_by('-shift_date')
 
 
 class ShiftAssignmentCreateView(StaffRequiredMixin, CreateView):
@@ -68,27 +60,26 @@ class ShiftAssignmentCreateView(StaffRequiredMixin, CreateView):
     success_url = reverse_lazy('shift_assignment:list')
 
     def form_valid(self, form):
-        form.instance.created_by = self.request.user
-        messages.success(self.request, 'Сменное задание успешно создано')
+        # Если в модели нет поля created_by, эту строку можно убрать
+        # form.instance.created_by = self.request.user
+        messages.success(self.request, "Задание успешно создано")
         return super().form_valid(form)
 
 
 class ShiftAssignmentUpdateView(StaffRequiredMixin, UpdateView):
     model = ShiftAssignment
-    form_class = UpdateShiftAssignmentForm
+    form_class = ShiftAssignmentForm
     template_name = 'shift_assignment/update.html'
+    success_url = reverse_lazy('shift_assignment:list')
 
     def form_valid(self, form):
-        if form.instance.status == 'completed' and not form.instance.completed_at:
+        # Используем константы для статусов
+        if form.instance.status == ShiftAssignment.Status.COMPLETED and not form.instance.completed_at:
             form.instance.completed_at = timezone.now()
-            ShiftAssignmentArchive.objects.create_from_assignment(form.instance)
-            messages.success(self.request, 'Задание выполнено и перемещено в архив')
+            # Создаём архивное задание
+            ShiftAssignmentArchive.create_from_assignment(form.instance)
+        messages.success(self.request, "Задание успешно обновлено")
         return super().form_valid(form)
-
-    def get_success_url(self):
-        if self.object.status == 'completed':
-            return reverse_lazy('shift_assignment:archive')
-        return reverse_lazy('shift_assignment:list')
 
 
 class ShiftAssignmentDeleteView(StaffRequiredMixin, DeleteView):
@@ -96,197 +87,172 @@ class ShiftAssignmentDeleteView(StaffRequiredMixin, DeleteView):
     template_name = 'shift_assignment/delete.html'
     success_url = reverse_lazy('shift_assignment:list')
 
-    def delete(self, request, *args, **kwargs):
-        messages.success(request, 'Задание успешно удалено')
-        return super().delete(request, *args, **kwargs)
-
 
 class ShiftAssignmentDetailView(LoginRequiredMixin, DetailView):
     model = ShiftAssignment
     template_name = 'shift_assignment/detail.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['can_edit'] = self.request.user.role in ['master', 'director']
-        return context
+    context_object_name = 'assignment'
 
 
 class CompleteAssignmentView(LoginRequiredMixin, View):
-    """Обработка отметки о выполнении задания оператором"""
-
     def post(self, request, pk):
         assignment = get_object_or_404(ShiftAssignment, pk=pk)
-        success, message = assignment.complete(request.user)
+        actual_quantity = request.POST.get('actual_quantity')
 
-        if success:
-            messages.success(request, message)
-        else:
-            messages.error(request, message)
+        try:
+            actual_quantity = int(actual_quantity)
+        except (TypeError, ValueError):
+            return JsonResponse({'success': False, 'message': 'Некорректное количество'})
 
-        return redirect('users:profile', username=request.user.username)
+        success, message = assignment.complete_assignment(actual_quantity, request.user)
+        return JsonResponse({'success': success, 'message': message})
 
 
 class ShiftAssignmentArchiveView(LoginRequiredMixin, ListView):
     model = ShiftAssignmentArchive
     template_name = 'shift_assignment/archive.html'
-    context_object_name = 'archived_shifts'
-    paginate_by = 20
+    context_object_name = 'archived_assignments'
 
     def get_queryset(self):
-        return ShiftAssignmentArchive.objects.all().order_by('-completed_at')
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = 'Архив выполненных смен'
-        return context
+        return ShiftAssignmentArchive.objects.all().order_by('-archived_at')
 
 
-@login_required
-def upload_shift_assignments(request):
-    if request.user.role not in ['master', 'director']:
-        raise PermissionDenied(_("Только мастер или директор могут загружать задания"))
-
+class ShiftAssignmentUploadView(LoginRequiredMixin, FormView):
     template_name = 'shift_assignment/upload.html'
-    context = {
-        'title': _('Загрузка сменных заданий из Excel'),
-        'example_columns': [
-            'customer (обязательно)',
-            'date (обязательно, формат ДД.ММ.ГГГГ)',
-            'machine_number (обязательно, число)',
-            'operator/operator_id (обязательно, логин пользователя)',
-            'order (обязательно)',
-            'part (обязательно)',
-            'quantity (обязательно, число)',
-            'comment (необязательно)'
-        ],
-        'example_file_url': '/static/files/shift_assignment_example.xlsx'
+    form_class = ExcelUploadForm
+    success_url = reverse_lazy('shift_assignment:list')
+
+    column_mapping = {
+        'Наименование заказа': 'order_name',
+        'Заказчик': 'customer',
+        'Дата смены': 'shift_date',
+        'Тип смены': 'shift_type',
+        'Логин оператора': 'operator_username',
+        'Плановое количество': 'planned_quantity',
+        'Номер станка': 'machine_number',
+        'Примечания': 'notes'
     }
 
-    if request.method == 'POST':
-        file = request.FILES.get('file')
-        if not file:
-            messages.error(request, _('Файл не выбран'))
-            return render(request, template_name, context)
+    required_columns = [
+        'Наименование заказа',
+        'Заказчик',
+        'Дата смены',
+        'Тип смены',
+        'Логин оператора',
+        'Плановое количество'
+    ]
 
-        if not file.name.endswith(('.xlsx', '.xls')):
-            messages.error(request, _('Поддерживаются только файлы Excel (.xlsx, .xls)'))
-            return render(request, template_name, context)
-
+    def form_valid(self, form):
+        excel_file = form.cleaned_data['excel_file']
         try:
-            df = pd.read_excel(file)
+            df = pd.read_excel(excel_file)
 
-            operator_col = None
-            for col in ['operator', 'operator_id']:
-                if col in df.columns:
-                    operator_col = col
-                    break
+            missing = set(self.required_columns) - set(df.columns)
+            if missing:
+                messages.error(self.request, f"Отсутствуют обязательные колонки: {', '.join(missing)}")
+                return self.form_invalid(form)
 
-            required_columns = [
-                'customer',
-                'date',
-                'machine_number',
-                operator_col,
-                'order',
-                'part',
-                'quantity'
-            ]
+            df.rename(columns=self.column_mapping, inplace=True)
 
-            missing_columns = [col for col in required_columns if col not in df.columns]
-            if missing_columns:
-                messages.error(
-                    request,
-                    _('Отсутствуют обязательные колонки: ') + ", ".join(missing_columns)
-                )
-                return render(request, template_name, context)
+            created_count = 0
+            error_details = []
 
-            success_count = 0
-            errors = []
-            duplicates = 0
-
-            for idx, row in df.iterrows():
+            for index, row in df.iterrows():
                 try:
-                    if pd.isna(row['customer']) or not str(row['customer']).strip():
-                        raise ValueError(_("Не указан клиент"))
-
-                    if pd.isna(row[operator_col]):
-                        raise ValueError(_("Не указан оператор"))
-
-                    operator = User.objects.get(username=row[operator_col])
-
-                    # Поиск production_plan по order и customer (предполагается, что есть такая модель и поля)
-                    production_plan = None
-                    from production_plan.models import ProductionPlan
-                    try:
-                        production_plan = ProductionPlan.objects.get(
-                            order=row['order'],
-                            customer=row['customer']
-                        )
-                    except ProductionPlan.DoesNotExist:
-                        raise ValueError(_("План производства с таким заказом и клиентом не найден"))
-
-                    # Проверка дубликатов
-                    if ShiftAssignment.objects.filter(
-                        shift_date=row['date'],
-                        machine_number=row['machine_number'],
-                        operator=operator,
-                        production_plan=production_plan
-                    ).exists():
-                        duplicates += 1
-                        continue
+                    operator = User.objects.get(username=row['operator_username'], role='operator')
+                    shift_date = datetime.strptime(str(row['shift_date']), '%d.%m.%Y').date()
+                    plan = ProductionPlan.objects.get(order_name=row['order_name'], customer=row['customer'])
 
                     ShiftAssignment.objects.create(
-                        production_plan=production_plan,
-                        shift_date=row['date'],
-                        machine_number=str(row['machine_number']),
+                        production_plan=plan,
+                        shift_date=shift_date,
+                        shift_type=row['shift_type'],
                         operator=operator,
-                        planned_quantity=int(row['quantity']),
-                        notes=row.get('comment', ''),
-                        status=ShiftAssignment.Status.PLANNED,
-                        shift_type=ShiftAssignment.ShiftType.DAY  # Можно расширить логику, если нужно
+                        planned_quantity=row['planned_quantity'],
+                        machine_number=row.get('machine_number', ''),
+                        notes=row.get('notes', '')
                     )
-                    success_count += 1
+                    created_count += 1
 
                 except User.DoesNotExist:
-                    errors.append(_('Строка {0}: Оператор "{1}" не найден').format(idx + 2, row[operator_col]))
-                except ValueError as e:
-                    errors.append(_('Строка {0}: {1}').format(idx + 2, str(e)))
+                    error_details.append(f"Строка {index + 2}: Оператор '{row.get('operator_username', '?')}' не найден")
+                except ProductionPlan.DoesNotExist:
+                    error_details.append(f"Строка {index + 2}: Производственный план не найден (Заказ: {row.get('order_name', '?')}, Заказчик: {row.get('customer', '?')})")
                 except Exception as e:
-                    errors.append(_('Строка {0}: Ошибка - {1}').format(idx + 2, str(e)))
+                    error_details.append(f"Строка {index + 2}: {str(e)}")
 
-            if success_count > 0:
-                messages.success(request, _('Успешно загружено {0} заданий').format(success_count))
+            if created_count:
+                messages.success(self.request, f"Успешно создано {created_count} сменных заданий.")
 
-            if duplicates > 0:
-                messages.warning(request, _('Пропущено {0} дубликатов (задания уже существуют)').format(duplicates))
-
-            if errors:
-                messages.error(request, _('Найдено {0} ошибок. Первые 5:').format(len(errors)))
-                for error in errors[:5]:
-                    messages.error(request, error)
-                logger.error(f"Ошибки при загрузке файла {file.name}: {errors}")
-
-            return redirect('shift_assignment:list')
+            if error_details:
+                messages.warning(self.request, f"Не удалось создать {len(error_details)} заданий:")
+                for err in error_details[:3]:
+                    messages.error(self.request, err)
+                if len(error_details) > 3:
+                    messages.info(self.request, f"...и ещё {len(error_details) - 3} ошибок")
 
         except Exception as e:
-            logger.exception("Ошибка обработки файла")
-            messages.error(
-                request,
-                _('Ошибка обработки файла: {0}. Проверьте формат файла и скачайте пример.').format(str(e))
-            )
-            return render(request, template_name, context)
+            messages.error(self.request, f"Ошибка при обработке файла: {str(e)}")
+            logger.error(f"Ошибка загрузки файла: {str(e)}")
+            return self.form_invalid(form)
 
-    return render(request, template_name, context)
+        return super().form_valid(form)
 
 
 @login_required
 def complete_assignment(request, pk):
-    assignment = get_object_or_404(ShiftAssignment, pk=pk)
-    success, message = assignment.complete(request.user)
+    if request.method == 'POST':
+        assignment = get_object_or_404(ShiftAssignment, pk=pk)
+        actual_quantity = request.POST.get('actual_quantity')
 
-    if success:
-        messages.success(request, message)
+        try:
+            actual_quantity = int(actual_quantity)
+        except (TypeError, ValueError):
+            messages.error(request, "Некорректное количество")
+            return redirect('shift_assignment:detail', pk=pk)
+
+        success, message = assignment.complete_assignment(actual_quantity, request.user)
+        if success:
+            messages.success(request, message)
+        else:
+            messages.error(request, message)
+        return redirect('shift_assignment:detail', pk=pk)
     else:
-        messages.error(request, message)
+        return redirect('shift_assignment:detail', pk=pk)
 
-    return redirect('users:profile', username=request.user.username)
 
+def download_rus_template(request):
+    df = pd.DataFrame(columns=[
+        'Заказчик',
+        'Наименование заказа',
+        'Дата смены',
+        'Тип смены',
+        'Логин оператора',
+        'Плановое количество',
+        'Номер станка',
+        'Примечания'
+    ])
+
+    df.loc[0] = [
+        'ООО "МеталлСтрой"',
+        'MS-2023-001',
+        '15.05.2025',
+        'day',
+        'Khasanov.N',
+        100,
+        'CNC-01',
+        'Пример примечания'
+    ]
+
+    output = BytesIO()
+    writer = pd.ExcelWriter(output, engine='xlsxwriter')
+    df.to_excel(writer, index=False, sheet_name='Шаблон')
+    writer.close()
+    output.seek(0)
+
+    response = HttpResponse(
+        output.getvalue(),
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename=шаблон_сменных_заданий.xlsx'
+    return response
