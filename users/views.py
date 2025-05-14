@@ -44,10 +44,17 @@ class CustomLogoutView(LogoutView):
     next_page = 'login'
 
 
-class RegisterView(CreateView):
+class RegisterView(UserPassesTestMixin, CreateView):
     form_class = RegistrationForm
     template_name = 'users/register.html'
     success_url = reverse_lazy('login')
+
+    def test_func(self):
+        return self.request.user.is_superuser  # доступ только суперпользователю
+
+    def handle_no_permission(self):
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden("Доступ запрещён")
 
 
 class ProfileView(LoginRequiredMixin, DetailView):
@@ -65,21 +72,21 @@ class ProfileView(LoginRequiredMixin, DetailView):
         if user.role == 'operator' and user == profile_user:
             context['active_assignments'] = ShiftAssignment.objects.filter(
                 operator__username=user.username,
-                status=False
+                status=ShiftAssignment.Status.ASSIGNMENT
             ).order_by('-shift_date')
 
             context['completed_assignments'] = ShiftAssignment.objects.filter(
                 operator__username=user.username,
-                status=True
+                status=ShiftAssignment.Status.COMPLETED
             ).order_by('-completed_at')[:10]
 
         elif user.role in ['master', 'director']:
             context['active_assignments'] = ShiftAssignment.objects.filter(
-                status=False
+                status=ShiftAssignment.Status.ASSIGNMENT
             ).order_by('-shift_date')
 
             context['completed_assignments'] = ShiftAssignment.objects.filter(
-                status=True
+                status=ShiftAssignment.Status.COMPLETED
             ).order_by('-completed_at')[:10]
 
         return context

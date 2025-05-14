@@ -1,5 +1,4 @@
 {% extends 'base.html' %}
-{% load i18n %}
 
 {% block content %}
 <div class="container mt-5">
@@ -20,11 +19,16 @@
                 </div>
             </div>
         </div>
-        {% if profile_user == request.user %}
-        <div class="card-footer">
+        {% if profile_user == request.user or request.user.is_superuser %}
+        <div class="card-footer d-flex gap-2">
             <a href="{% url 'users:update' profile_user.username %}" class="btn btn-outline-primary">
                 <i class="bi bi-pencil"></i> Редактировать профиль
             </a>
+            {% if request.user.is_superuser %}
+            <a href="{% url 'users:register' %}" class="btn btn-success">
+                <i class="bi bi-person-plus"></i> Добавить пользователя
+            </a>
+            {% endif %}
         </div>
         {% endif %}
     </div>
@@ -69,14 +73,16 @@
                         {% if profile_user.role == 'master' %}
                         <td>{{ assignment.operator.get_full_name }}</td>
                         {% endif %}
-                        <td>{{ assignment.part }}</td>
-                        <td>{{ assignment.order }}</td>
-                        <td>{{ assignment.quantity }}</td>
-                        <td>{{ assignment.date|date:"d.m.Y" }}</td>
+                        <td>{{ assignment.production_plan.part_name }}</td>
+                        <td>{{ assignment.production_plan.order_name }}</td>
+                        <td>{{ assignment.planned_quantity }}</td>
+                        <td>{{ assignment.shift_date|date:"d.m.Y" }}</td>
                         <td>
-                            <span class="badge bg-{% if assignment.status %}success{% else %}warning{% endif %}">
-                                {% if assignment.status %}Выполнено{% else %}В работе{% endif %}
-                            </span>
+                            {% if assignment.status == 'completed' %}
+                                <span class="badge bg-success">Выполнено</span>
+                            {% else %}
+                                <span class="badge bg-warning">В работе</span>
+                            {% endif %}
                         </td>
                         <td>
                             <a href="{% url 'shift_assignment:detail' assignment.id %}" class="btn btn-sm btn-info">
@@ -122,14 +128,14 @@
                         {% if profile_user.role == 'master' %}
                         <td>{{ assignment.operator.get_full_name }}</td>
                         {% endif %}
-                        <td>{{ assignment.part }}</td>
-                        <td>{{ assignment.order }}</td>
-                        <td>{{ assignment.quantity }}</td>
+                        <td>{{ assignment.production_plan.part_name }}</td>
+                        <td>{{ assignment.production_plan.order_name }}</td>
+                        <td>{{ assignment.planned_quantity }}</td>
                         <td>
                             {% if assignment.completed_at %}
-                            {{ assignment.completed_at|date:"d.m.Y H:i" }}
+                                {{ assignment.completed_at|date:"d.m.Y H:i" }}
                             {% else %}
-                            Не указана
+                                Не указана
                             {% endif %}
                         </td>
                     </tr>
@@ -145,3 +151,4 @@
     {% endif %}
 </div>
 {% endblock %}
+

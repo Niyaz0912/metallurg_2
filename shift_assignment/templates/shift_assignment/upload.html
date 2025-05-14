@@ -1,66 +1,116 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
 <div class="container mt-4">
-    <div class="card border-primary">
+    <div class="card border-primary shadow">
         <div class="card-header bg-primary text-white">
-            <h4><i class="bi bi-upload me-2"></i>{{ title }}</h4>
+            <div class="d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">
+                    <i class="bi bi-upload me-2"></i>Загрузка сменных заданий
+                </h4>
+                <a href="{% url 'shift_assignment:list' %}" class="btn btn-sm btn-light">
+                    <i class="bi bi-list-ul me-1"></i>К списку
+                </a>
+            </div>
         </div>
-        <div class="card-body">
 
-            <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+        <div class="card-body">
+            <!-- Сообщения об ошибках/успехе -->
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-4">
+                {% if 'safe' in message.tags %}{{ message|safe }}{% else %}{{ message }}{% endif %}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+
+            <!-- Форма загрузки -->
+            <form method="post" enctype="multipart/form-data" id="uploadForm" class="needs-validation" novalidate>
                 {% csrf_token %}
-                <div class="mb-3">
-                    <label for="excel_file" class="form-label">Выберите файл Excel:</label>
-                    <input type="file" class="form-control" id="excel_file"
-                           name="file" accept=".xlsx, .xls" required>
-                    <div class="invalid-feedback">Пожалуйста, выберите файл для загрузки</div>
-                    <div class="form-text">Поддерживаются файлы .xlsx и .xls</div>
+
+                <div class="mb-4">
+                    <label for="excel_file" class="form-label fw-bold">
+                        <i class="bi bi-file-excel me-2"></i>Файл Excel
+                    </label>
+                    <input type="file" class="form-control form-control-lg"
+                           id="excel_file" name="excel_file" required
+                           accept=".xlsx, .xls, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel">
+                    <div class="form-text mt-2">
+                        <small>Поддерживаемые форматы: .xlsx, .xls</small>
+                        <div id="fileInfo" class="fw-bold text-primary mt-1"></div>
+                    </div>
+                    <div class="invalid-feedback">Пожалуйста, выберите файл</div>
                 </div>
 
-                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                    <a href="{% url 'shift_assignment:list' %}" class="btn btn-secondary me-md-2">
-                        <i class="bi bi-arrow-left me-2"></i>Назад к списку
-                    </a>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-upload me-2"></i>Загрузить задания
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4 pt-3 border-top">
+                    <button type="reset" class="btn btn-outline-secondary me-md-2">
+                        <i class="bi bi-x-circle me-2"></i>Очистить
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                        <i class="bi bi-upload me-2"></i>Загрузить
                     </button>
                 </div>
             </form>
+        </div>
+
+        <div class="card-footer bg-light">
+            <small class="text-muted">
+                <i class="bi bi-info-circle me-1"></i>
+                Обязательные колонки: Наименование заказа, Заказчик, Дата смены, Тип смены, Логин оператора, Плановое количество
+            </small>
         </div>
     </div>
 </div>
 
 <script>
-// Валидация формы на клиенте
-(function() {
-    'use strict'
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('uploadForm');
+    const fileInput = document.getElementById('excel_file');
+    const fileInfo = document.getElementById('fileInfo');
+    const submitBtn = document.getElementById('submitBtn');
 
-    // Показываем ошибки при отправке
-    const forms = document.querySelectorAll('.needs-validation')
-    Array.from(forms).forEach(form => {
-        form.addEventListener('submit', event => {
-            if (!form.checkValidity()) {
-                event.preventDefault()
-                event.stopPropagation()
-            }
-            form.classList.add('was-validated')
-        }, false)
-    })
+    // Отображение информации о выбранном файле
+    fileInput.addEventListener('change', function() {
+        if (this.files.length > 0) {
+            const file = this.files[0];
+            fileInfo.innerHTML = `
+                <i class="bi bi-file-earmark-excel text-success"></i>
+                ${file.name}
+                <span class="text-muted">(${(file.size/1024).toFixed(1)} KB)</span>
+            `;
+        } else {
+            fileInfo.textContent = '';
+        }
+    });
 
-    // Показываем имя выбранного файла
-    const fileInput = document.getElementById('excel_file')
-    fileInput.addEventListener('change', function(e) {
-        const fileName = e.target.files[0]?.name || 'Файл не выбран'
-        document.querySelector('.form-text').textContent = `Выбран файл: ${fileName}`
-    })
-})()
+    // Обработка отправки формы
+    form.addEventListener('submit', function(e) {
+        if (!form.checkValidity()) {
+            e.preventDefault();
+            e.stopPropagation();
+        } else {
+            // Блокировка кнопки при валидной форме
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                Обработка...
+            `;
+        }
+        form.classList.add('was-validated');
+    });
+});
 </script>
 
 <style>
 .card {
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    border-radius: 0.5rem;
+}
+.form-control-lg {
+    padding: 0.5rem 1rem;
+    border-radius: 0.3rem;
+}
+.alert {
+    border-radius: 0.5rem;
 }
 </style>
 {% endblock %}
-

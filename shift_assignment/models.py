@@ -1,10 +1,11 @@
 from datetime import date
-from django.core.exceptions import ValidationError
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 import logging
+
+from rich.status import Status
 
 logger = logging.getLogger(__name__)
 
@@ -15,10 +16,8 @@ class ShiftAssignment(models.Model):
         NIGHT = 'night', _('Ночная смена (20:00-08:00)')
 
     class Status(models.TextChoices):
-        PLANNED = 'planned', _('Запланировано')
-        IN_PROGRESS = 'in_progress', _('В работе')
-        COMPLETED = 'completed', _('Выполнено')
-        CANCELLED = 'cancelled', _('Отменено')
+        ASSIGNMENT = 'assignment', _('Задание на смену')
+        COMPLETED = 'completed', _('Выполненное задание')
 
     production_plan = models.ForeignKey(
         'production_plan.ProductionPlan',
@@ -62,7 +61,7 @@ class ShiftAssignment(models.Model):
     status = models.CharField(
         max_length=20,
         choices=Status.choices,
-        default=Status.PLANNED,
+        default=Status.ASSIGNMENT,
         verbose_name=_('Статус задания'),
         db_index=True
     )
@@ -98,40 +97,22 @@ class ShiftAssignment(models.Model):
         verbose_name=_('Дата выполнения')
     )
 
+    def save(self, *args, **kwargs):
+        if self.actual_quantity is not None and self.actual_quantity > 0:
+            self.status = self.Status.COMPLETED
+            if not self.completed_at:
+                self.completed_at = timezone.now()
+        else:
+            self.status = self.Status.ASSIGNMENT
+            self.completed_at = None
+
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return (
             f"{self.shift_date} {self.get_shift_type_display()} - "
             f"Станок #{self.machine_number} ({self.operator})"
         )
-
-    def clean(self):
-        if self.planned_quantity <= 0:
-            raise ValidationError(_("Количество должно быть положительным числом"))
-
-        if self.actual_quantity is not None and self.actual_quantity <= 0:
-            raise ValidationError(_("Фактическое количество должно быть положительным"))
-
-    def save(self, *args, **kwargs):
-        if self.actual_quantity is not None and self.status != self.Status.CANCELLED:
-            if self.actual_quantity >= self.planned_quantity:
-                self.status = self.Status.COMPLETED
-                self.completed_at = timezone.now()
-            else:
-                self.status = self.Status.IN_PROGRESS
-
-        self.full_clean()
-        super().save(*args, **kwargs)
-
-    def complete_assignment(self, actual_quantity, user):
-        try:
-            self.actual_quantity = actual_quantity
-            self.completed_by = user
-            self.save()
-            self.production_plan.update_progress()
-            return True, _("Задание успешно завершено")
-        except Exception as e:
-            logger.error(f"Ошибка завершения задания {self.id}: {str(e)}")
-            return False, _("Ошибка при завершении задания")
 
     class Meta:
         verbose_name = _('Сменное задание')
@@ -166,7 +147,7 @@ class ShiftAssignmentArchive(models.Model):
         max_length=10,
         choices=ShiftAssignment.ShiftType.choices,
         verbose_name=_('Тип смены'),
-        default='day'
+        default=ShiftAssignment.ShiftType.DAY
     )
     machine_number = models.CharField(
         max_length=50,

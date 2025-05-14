@@ -1,6 +1,8 @@
 from django import forms
 from django.contrib.auth import get_user_model
 from .models import ShiftAssignment
+from django.utils.translation import gettext as _
+
 
 User = get_user_model()
 
@@ -46,4 +48,24 @@ class UpdateShiftAssignmentForm(StyleFormMixin, forms.ModelForm):
 
 
 class ExcelUploadForm(forms.Form):
-    excel_file = forms.FileField(label='Выберите Excel файл')
+    excel_file = forms.FileField(
+        label=_('Excel файл'),
+        help_text=_('Файл должен содержать все обязательные колонки'),
+        widget=forms.FileInput(attrs={
+            'accept': '.xlsx, .xls',
+            'class': 'form-control-lg'
+        }),
+        validators=[
+            # Можно добавить кастомные валидаторы при необходимости
+        ]
+    )
+
+    def clean_excel_file(self):
+        file = self.cleaned_data.get('excel_file')
+        if file:
+            if not file.name.endswith(('.xlsx', '.xls')):
+                raise forms.ValidationError(
+                    _('Поддерживаются только файлы Excel (.xlsx, .xls)')
+                )
+            # Дополнительные проверки файла при необходимости
+        return file
