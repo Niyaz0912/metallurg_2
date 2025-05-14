@@ -1,63 +1,18 @@
 {% extends 'base.html' %}
+{% load crispy_forms_tags %}
 
 {% block content %}
 <div class="container mt-4">
-    <div class="card">
-        <div class="card-header">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
             <h4>Редактирование задания #{{ object.id }}</h4>
         </div>
         <div class="card-body">
-            <form method="post">
+            <form method="post" enctype="multipart/form-data" novalidate>
                 {% csrf_token %}
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        {{ form.customer.label_tag }}
-                        {{ form.customer }}
-                        {{ form.customer.errors }}
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        {{ form.date.label_tag }}
-                        {{ form.date }}
-                        {{ form.date.errors }}
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        {{ form.machine_number.label_tag }}
-                        {{ form.machine_number }}
-                        {{ form.machine_number.errors }}
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        {{ form.operator.label_tag }}
-                        {{ form.operator }}
-                        {{ form.operator.errors }}
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        {{ form.order.label_tag }}
-                        {{ form.order }}
-                        {{ form.order.errors }}
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        {{ form.part.label_tag }}
-                        {{ form.part }}
-                        {{ form.part.errors }}
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        {{ form.quantity.label_tag }}
-                        {{ form.quantity }}
-                        {{ form.quantity.errors }}
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        {{ form.status.label_tag }}
-                        {{ form.status }}
-                        {{ form.status.errors }}
-                    </div>
-                    <div class="col-12 mb-3">
-                        {{ form.comment.label_tag }}
-                        {{ form.comment }}
-                        {{ form.comment.errors }}
-                    </div>
-                </div>
+                {{ form|crispy }}
                 <div class="d-flex justify-content-between mt-4">
-                    <a href="{% url 'shift_assignment:detail' object.pk %}" class="btn btn-secondary">
+                    <a href="{% url 'shift_assignment:detail' object.pk %}" class="btn btn-outline-secondary">
                         <i class="bi bi-x-circle"></i> Отмена
                     </a>
                     <button type="submit" class="btn btn-primary">

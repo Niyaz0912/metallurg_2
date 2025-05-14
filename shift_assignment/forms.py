@@ -3,15 +3,16 @@ from django.contrib.auth import get_user_model
 from .models import ShiftAssignment
 from django.utils.translation import gettext as _
 
-
 User = get_user_model()
 
 
 class StyleFormMixin:
     def __init__(self, *args, **kwargs):
+        css_class = kwargs.pop('css_class', 'form-control')
         super().__init__(*args, **kwargs)
-        for field_name, field in self.fields.items():
-            field.widget.attrs['class'] = 'form-control'
+        for field in self.fields.values():
+            existing_classes = field.widget.attrs.get('class', '')
+            field.widget.attrs['class'] = f"{existing_classes} {css_class}".strip()
 
 
 class ShiftAssignmentForm(StyleFormMixin, forms.ModelForm):
@@ -21,10 +22,11 @@ class ShiftAssignmentForm(StyleFormMixin, forms.ModelForm):
             'production_plan',
             'shift_date',
             'shift_type',
-            'machine_number',  # временное поле вместо machine
+            'machine_number',
             'operator',
             'planned_quantity',
-            'status',
+            'order_name',
+            'work_type',
             'drawing',
             'notes',
         ]
@@ -35,14 +37,46 @@ class ShiftAssignmentForm(StyleFormMixin, forms.ModelForm):
 
 
 class UpdateShiftAssignmentForm(StyleFormMixin, forms.ModelForm):
+    actual_quantity = forms.IntegerField(
+        min_value=0,
+        required=True,
+        label='Фактическое количество',
+        help_text='Введите фактическое количество (неотрицательное число)'
+    )
+
     class Meta:
         model = ShiftAssignment
         fields = [
             'actual_quantity',
-            'status',
             'notes',
         ]
         widgets = {
+            'notes': forms.Textarea(attrs={'rows': 3}),
+        }
+
+    def clean_actual_quantity(self):
+        qty = self.cleaned_data.get('actual_quantity')
+        if qty is None or qty < 0:
+            raise forms.ValidationError("Количество не может быть отрицательным")
+        return qty
+
+
+class EditShiftAssignmentForm(StyleFormMixin, forms.ModelForm):
+    class Meta:
+        model = ShiftAssignment
+        fields = [
+            'production_plan',
+            'shift_date',
+            'shift_type',
+            'machine_number',
+            'operator',
+            'order_name',
+            'work_type',
+            'planned_quantity',
+            'drawing',
+        ]
+        widgets = {
+            'shift_date': forms.DateInput(attrs={'type': 'date'}),
             'notes': forms.Textarea(attrs={'rows': 3}),
         }
 
@@ -55,9 +89,6 @@ class ExcelUploadForm(forms.Form):
             'accept': '.xlsx, .xls',
             'class': 'form-control-lg'
         }),
-        validators=[
-            # Можно добавить кастомные валидаторы при необходимости
-        ]
     )
 
     def clean_excel_file(self):
@@ -67,5 +98,8 @@ class ExcelUploadForm(forms.Form):
                 raise forms.ValidationError(
                     _('Поддерживаются только файлы Excel (.xlsx, .xls)')
                 )
-            # Дополнительные проверки файла при необходимости
+            # Можно добавить проверку размера файла, например:
+            # if file.size > 5 * 1024 * 1024:
+            #     raise forms.ValidationError(_('Размер файла не должен превышать 5 МБ'))
         return file
+

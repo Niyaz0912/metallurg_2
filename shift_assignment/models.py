@@ -3,11 +3,6 @@ from django.db import models
 from django.conf import settings
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-import logging
-
-from rich.status import Status
-
-logger = logging.getLogger(__name__)
 
 
 class ShiftAssignment(models.Model):
@@ -39,6 +34,18 @@ class ShiftAssignment(models.Model):
     machine_number = models.CharField(
         max_length=50,
         verbose_name=_('Номер станка'),
+        blank=True,
+        null=True,
+    )
+    order_name = models.CharField(
+        max_length=255,
+        verbose_name=_('Наименование изделия'),
+        blank=True,
+        null=True,
+    )
+    work_type = models.CharField(
+        max_length=255,
+        verbose_name=_('Вид работ'),
         blank=True,
         null=True,
     )
@@ -96,6 +103,16 @@ class ShiftAssignment(models.Model):
         blank=True,
         verbose_name=_('Дата выполнения')
     )
+
+    def complete_assignment(self, actual_quantity, user):
+        if actual_quantity <= 0:
+            return False, "Количество должно быть положительным числом"
+        self.actual_quantity = actual_quantity
+        self.status = self.Status.COMPLETED
+        self.completed_at = timezone.now()
+        self.completed_by = user
+        self.save()
+        return True, "Задание успешно отмечено как выполненное"
 
     def save(self, *args, **kwargs):
         if self.actual_quantity is not None and self.actual_quantity > 0:

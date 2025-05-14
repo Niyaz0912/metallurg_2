@@ -1,41 +1,40 @@
 import logging
-from datetime import timezone, datetime
+from datetime import datetime
 from io import BytesIO
 
 import pandas as pd
 
 from django.contrib import messages
 from django.contrib.auth import get_user_model
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.core.exceptions import PermissionDenied
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
+from django.utils import timezone
 
 from production_plan.models import ProductionPlan
-from production_plan.forms import ExcelUploadForm
-from production_plan.views import StaffRequiredMixin
-from .forms import ShiftAssignmentForm
+from .forms import ShiftAssignmentForm, UpdateShiftAssignmentForm, ExcelUploadForm, EditShiftAssignmentForm
 from .models import ShiftAssignment, ShiftAssignmentArchive
-from django.contrib.auth.decorators import login_required
-
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
 
 
+# Список сменных заданий
 class ShiftAssignmentListView(LoginRequiredMixin, ListView):
     model = ShiftAssignment
     template_name = 'shift_assignment/list.html'
     context_object_name = 'shift_assignments'
 
     def get_queryset(self):
-        # Фильтруем по статусу "Задание на смену"
-        return ShiftAssignment.objects.filter(status=ShiftAssignment.Status.ASSIGNMENT).order_by('-shift_date')
+        return ShiftAssignment.objects.filter(
+            status=ShiftAssignment.Status.ASSIGNMENT
+        ).order_by('-shift_date')
 
 
+# Загрузка сменных заданий из Excel
 class ShiftAssignmentUploadView(LoginRequiredMixin, View):
     template_name = 'shift_assignment/upload.html'
     success_url = reverse_lazy('shift_assignment:list')
@@ -50,7 +49,6 @@ class ShiftAssignmentUploadView(LoginRequiredMixin, View):
         'Номер станка': 'machine_number',
         'Примечания': 'notes'
     }
-
     required_columns = list(column_mapping.keys())
 
     def get(self, request):
@@ -63,29 +61,22 @@ class ShiftAssignmentUploadView(LoginRequiredMixin, View):
             return render(request, self.template_name, {'form': form})
 
         excel_file = request.FILES['excel_file']
-
         try:
             df = pd.read_excel(excel_file)
             df.columns = df.columns.str.strip()
-
             missing_cols = [col for col in self.required_columns if col not in df.columns]
             if missing_cols:
                 messages.error(request, f"Отсутствуют колонки: {', '.join(missing_cols)}")
                 return render(request, self.template_name, {'form': form})
-
             df = df.rename(columns=self.column_mapping)
-
             created_count = 0
             errors = []
-
             for idx, row in df.iterrows():
                 row_num = idx + 2
                 try:
                     shift_date = self.parse_date(row['shift_date'])
-
                     plan = ProductionPlan.objects.get(order_name=row['order_name'], customer=row['customer'])
                     operator = User.objects.get(username=row['operator_username'])
-
                     ShiftAssignment.objects.create(
                         production_plan=plan,
                         shift_date=shift_date,
@@ -94,10 +85,9 @@ class ShiftAssignmentUploadView(LoginRequiredMixin, View):
                         operator=operator,
                         planned_quantity=row['planned_quantity'],
                         notes=row.get('notes', ''),
-                        status=ShiftAssignment.Status.ASSIGNMENT  # Устанавливаем статус "Задание на смену"
+                        status=ShiftAssignment.Status.ASSIGNMENT
                     )
                     created_count += 1
-
                 except ProductionPlan.DoesNotExist:
                     errors.append(f"Строка {row_num}: План производства не найден (Заказ: {row.get('order_name')}, Заказчик: {row.get('customer')})")
                 except User.DoesNotExist:
@@ -107,19 +97,15 @@ class ShiftAssignmentUploadView(LoginRequiredMixin, View):
                 except Exception as e:
                     errors.append(f"Строка {row_num}: Ошибка: {str(e)}")
                     logger.error(f"Ошибка в строке {row_num}: {str(e)}")
-
             if created_count > 0:
                 messages.success(request, f"Успешно создано заданий: {created_count}")
-
             if errors:
                 messages.warning(request, f"Ошибки в {len(errors)} строках:")
                 for err in errors[:5]:
                     messages.error(request, err)
                 if len(errors) > 5:
                     messages.info(request, f"И ещё {len(errors) - 5} ошибок...")
-
             return redirect(self.success_url)
-
         except Exception as e:
             messages.error(request, f"Ошибка при обработке файла: {str(e)}")
             logger.exception("Ошибка при загрузке сменных заданий")
@@ -138,92 +124,90 @@ class ShiftAssignmentUploadView(LoginRequiredMixin, View):
         raise ValueError(f"Неподдерживаемый формат даты: {date_value}")
 
 
-class ShiftAssignmentCreateView(StaffRequiredMixin, CreateView):
+# Создание сменного задания
+class ShiftAssignmentCreateView(LoginRequiredMixin, CreateView):
     model = ShiftAssignment
     form_class = ShiftAssignmentForm
     template_name = 'shift_assignment/create.html'
     success_url = reverse_lazy('shift_assignment:list')
 
     def form_valid(self, form):
-        # Если в модели нет поля created_by, эту строку можно убрать
-        # form.instance.created_by = self.request.user
         messages.success(self.request, "Задание успешно создано")
         return super().form_valid(form)
 
 
-class ShiftAssignmentUpdateView(StaffRequiredMixin, UpdateView):
+# Обновление сменного задания
+class ShiftAssignmentUpdateView(LoginRequiredMixin, UpdateView):
     model = ShiftAssignment
-    form_class = ShiftAssignmentForm
+    form_class = EditShiftAssignmentForm  # используем форму с нужными полями
     template_name = 'shift_assignment/update.html'
     success_url = reverse_lazy('shift_assignment:list')
 
-    def form_valid(self, form):
-        # Используем константы для статусов
-        if form.instance.status == ShiftAssignment.Status.COMPLETED and not form.instance.completed_at:
-            form.instance.completed_at = timezone.now()
-            # Создаём архивное задание
-            ShiftAssignmentArchive.create_from_assignment(form.instance)
-        messages.success(self.request, "Задание успешно обновлено")
-        return super().form_valid(form)
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = "Редактирование задания"
+        return context
 
 
-class ShiftAssignmentDeleteView(StaffRequiredMixin, DeleteView):
+# Удаление сменного задания
+class ShiftAssignmentDeleteView(LoginRequiredMixin, DeleteView):
     model = ShiftAssignment
     template_name = 'shift_assignment/delete.html'
     success_url = reverse_lazy('shift_assignment:list')
 
 
+# Детализация сменного задания
 class ShiftAssignmentDetailView(LoginRequiredMixin, DetailView):
     model = ShiftAssignment
     template_name = 'shift_assignment/detail.html'
-    context_object_name = 'assignment'
+    context_object_name = 'object'  # или 'assignment' - как вам удобнее
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Передаём форму с начальными данными, если пользователь оператор и задание не выполнено
+        if self.request.user.role == 'operator' and self.object.status != 'completed':
+            context['complete_form'] = UpdateShiftAssignmentForm(instance=self.object)
+        return context
 
 
+# Завершение задания через POST-запрос (AJAX)
 class CompleteAssignmentView(LoginRequiredMixin, View):
     def post(self, request, pk):
         assignment = get_object_or_404(ShiftAssignment, pk=pk)
-        actual_quantity = request.POST.get('actual_quantity')
-
-        try:
-            actual_quantity = int(actual_quantity)
-        except (TypeError, ValueError):
-            return JsonResponse({'success': False, 'message': 'Некорректное количество'})
-
-        success, message = assignment.complete_assignment(actual_quantity, request.user)
-        return JsonResponse({'success': success, 'message': message})
-
-
-class ShiftAssignmentArchiveView(LoginRequiredMixin, ListView):
-    model = ShiftAssignmentArchive
-    template_name = 'shift_assignment/archive.html'
-    context_object_name = 'archived_assignments'
-
-    def get_queryset(self):
-        return ShiftAssignmentArchive.objects.all().order_by('-archived_at')
-
-
-@login_required
-def complete_assignment(request, pk):
-    if request.method == 'POST':
-        assignment = get_object_or_404(ShiftAssignment, pk=pk)
-        actual_quantity = request.POST.get('actual_quantity')
-
-        try:
-            actual_quantity = int(actual_quantity)
-        except (TypeError, ValueError):
-            messages.error(request, "Некорректное количество")
+        form = UpdateShiftAssignmentForm(request.POST, instance=assignment)
+        if form.is_valid():
+            assignment = form.save(commit=False)
+            success, message = assignment.complete_assignment(assignment.actual_quantity, request.user)
+            if success:
+                messages.success(request, message)
+                return redirect('users:profile', username=request.user.username)
+            else:
+                messages.error(request, message)
+                return redirect('shift_assignment:detail', pk=pk)
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
             return redirect('shift_assignment:detail', pk=pk)
 
-        success, message = assignment.complete_assignment(actual_quantity, request.user)
-        if success:
-            messages.success(request, message)
-        else:
-            messages.error(request, message)
-        return redirect('shift_assignment:detail', pk=pk)
-    else:
-        return redirect('shift_assignment:detail', pk=pk)
+
+# Архив сменных заданий
+class ShiftAssignmentArchiveView(LoginRequiredMixin, ListView):
+    model = ShiftAssignment
+    template_name = 'shift_assignment/archive.html'
+    context_object_name = 'assignments'
+    paginate_by = 20  # если нужно постраничное отображение
+
+    def get_queryset(self):
+        user = self.request.user
+        # Фильтрация по роли и статусу "completed"
+        if user.role == 'master':
+            return ShiftAssignment.objects.filter(operator=user, status='completed').order_by('-completed_at')
+        # Можно добавить другие роли и фильтры
+        return ShiftAssignment.objects.none()
 
 
+# Скачивание шаблона Excel
 def download_rus_template(request):
     df = pd.DataFrame(columns=[
         'Заказчик',
@@ -235,7 +219,6 @@ def download_rus_template(request):
         'Номер станка',
         'Примечания'
     ])
-
     df.loc[0] = [
         'ООО "МеталлСтрой"',
         'MS-2023-001',
@@ -246,13 +229,11 @@ def download_rus_template(request):
         'CNC-01',
         'Пример примечания'
     ]
-
     output = BytesIO()
     writer = pd.ExcelWriter(output, engine='xlsxwriter')
     df.to_excel(writer, index=False, sheet_name='Шаблон')
     writer.close()
     output.seek(0)
-
     response = HttpResponse(
         output.getvalue(),
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
