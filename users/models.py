@@ -34,6 +34,14 @@ class User(AbstractUser):
         null=True,
         verbose_name=_('Телефон')
     )
+    master = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='operators',
+        verbose_name=_('Мастер')
+    )
 
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = ['first_name', 'last_name', 'role']
@@ -48,6 +56,14 @@ class User(AbstractUser):
     @property
     def is_operator(self):
         return self.role == UserRoles.OPERATOR
+
+    @property
+    def is_director(self):
+        return self.role == UserRoles.DIRECTOR
+
+    @property
+    def is_admin(self):
+        return self.role == UserRoles.ADMIN
 
     class Meta:
         verbose_name = _('Пользователь')

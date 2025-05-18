@@ -3,7 +3,6 @@ from datetime import datetime
 from io import BytesIO
 
 import pandas as pd
-
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -16,28 +15,161 @@ from django.utils import timezone
 
 from production_plan.models import ProductionPlan
 from .forms import ShiftAssignmentForm, UpdateShiftAssignmentForm, ExcelUploadForm, EditShiftAssignmentForm
-from .models import ShiftAssignment, ShiftAssignmentArchive
+from .models import ShiftAssignment
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
 
 
-# Список сменных заданий
-class ShiftAssignmentListView(LoginRequiredMixin, ListView):
+class ActiveAssignmentsView(LoginRequiredMixin, ListView):
+    """Список активных заданий"""
     model = ShiftAssignment
-    template_name = 'shift_assignment/list.html'
-    context_object_name = 'shift_assignments'
+    template_name = 'shift_assignment/active_list.html'
+    context_object_name = 'assignments'
+    paginate_by = 20
 
     def get_queryset(self):
-        return ShiftAssignment.objects.filter(
+        queryset = ShiftAssignment.objects.filter(
             status=ShiftAssignment.Status.ASSIGNMENT
-        ).order_by('-shift_date')
+        ).select_related('operator', 'production_plan')
+
+        # Фильтрация по оператору (если запрос от оператора)
+        if self.request.user.role == 'operator':
+            queryset = queryset.filter(operator=self.request.user)
+
+        return queryset.order_by('-shift_date', 'shift_type')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = "Активные задания"
+        return context
 
 
-# Загрузка сменных заданий из Excel
+class CompletedAssignmentsView(LoginRequiredMixin, ListView):
+    """Список выполненных заданий"""
+    model = ShiftAssignment
+    template_name = 'shift_assignment/completed_list.html'
+    context_object_name = 'assignments'
+    paginate_by = 20
+
+    def get_queryset(self):
+        queryset = ShiftAssignment.objects.filter(
+            status=ShiftAssignment.Status.COMPLETED
+        ).select_related('operator', 'production_plan')
+
+        # Фильтрация по оператору (если запрос от оператора)
+        if self.request.user.role == 'operator':
+            queryset = queryset.filter(operator=self.request.user)
+
+        return queryset.order_by('-completed_at')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = "Выполненные задания"
+        return context
+
+
+class ShiftAssignmentCreateView(LoginRequiredMixin, CreateView):
+    """Создание нового задания"""
+    model = ShiftAssignment
+    form_class = ShiftAssignmentForm
+    template_name = 'shift_assignment/create.html'
+    success_url = reverse_lazy('shift_assignment:active')
+
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        messages.success(self.request, "Задание успешно создано")
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = "Создание нового задания"
+        return context
+
+
+class ShiftAssignmentUpdateView(LoginRequiredMixin, UpdateView):
+    """Редактирование задания"""
+    model = ShiftAssignment
+    form_class = EditShiftAssignmentForm
+    template_name = 'shift_assignment/update.html'
+
+    def get_success_url(self):
+        return reverse_lazy('shift_assignment:detail', kwargs={'pk': self.object.pk})
+
+    def form_valid(self, form):
+        messages.success(self.request, "Изменения сохранены")
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = "Редактирование задания"
+        return context
+
+
+class ShiftAssignmentDetailView(LoginRequiredMixin, DetailView):
+    """Детальная информация о задании"""
+    model = ShiftAssignment
+    template_name = 'shift_assignment/detail.html'
+    context_object_name = 'assignment'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = f"Задание #{self.object.id}"
+
+        # Добавляем форму завершения задания если оно активно и пользователь оператор
+        if (self.object.status == ShiftAssignment.Status.ASSIGNMENT and
+                (self.request.user == self.object.operator or self.request.user.is_superuser)):
+            context['complete_form'] = UpdateShiftAssignmentForm(instance=self.object)
+
+        return context
+
+
+class ShiftAssignmentDeleteView(LoginRequiredMixin, DeleteView):
+    """Удаление задания"""
+    model = ShiftAssignment
+    template_name = 'shift_assignment/delete.html'
+    success_url = reverse_lazy('shift_assignment:active')
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, "Задание успешно удалено")
+        return super().delete(request, *args, **kwargs)
+
+
+class CompleteAssignmentView(LoginRequiredMixin, View):
+    """Завершение задания"""
+
+    def post(self, request, pk):
+        assignment = get_object_or_404(ShiftAssignment, pk=pk)
+
+        # Проверяем права пользователя
+        if not (request.user == assignment.operator or request.user.is_superuser):
+            messages.error(request, "У вас нет прав для завершения этого задания")
+            return redirect('shift_assignment:detail', pk=pk)
+
+        # Получаем фактическое количество из формы
+        actual_quantity = request.POST.get('actual_quantity')
+
+        try:
+            actual_quantity = int(actual_quantity)
+        except (TypeError, ValueError):
+            messages.error(request, "Укажите корректное количество")
+            return redirect('shift_assignment:detail', pk=pk)
+
+        # Вызываем метод complete модели
+        success, message = assignment.complete(actual_quantity, request.user)
+
+        if success:
+            messages.success(request, message)
+        else:
+            messages.error(request, message)
+
+        return redirect('shift_assignment:detail', pk=pk)
+
+
 class ShiftAssignmentUploadView(LoginRequiredMixin, View):
+    """Загрузка заданий из Excel"""
     template_name = 'shift_assignment/upload.html'
-    success_url = reverse_lazy('shift_assignment:list')
+    success_url = reverse_lazy('shift_assignment:active')
 
     column_mapping = {
         'Наименование заказа': 'order_name',
@@ -64,19 +196,27 @@ class ShiftAssignmentUploadView(LoginRequiredMixin, View):
         try:
             df = pd.read_excel(excel_file)
             df.columns = df.columns.str.strip()
+
+            # Проверка обязательных колонок
             missing_cols = [col for col in self.required_columns if col not in df.columns]
             if missing_cols:
-                messages.error(request, f"Отсутствуют колонки: {', '.join(missing_cols)}")
+                messages.error(request, f"Отсутствуют обязательные колонки: {', '.join(missing_cols)}")
                 return render(request, self.template_name, {'form': form})
+
             df = df.rename(columns=self.column_mapping)
             created_count = 0
             errors = []
+
             for idx, row in df.iterrows():
                 row_num = idx + 2
                 try:
                     shift_date = self.parse_date(row['shift_date'])
-                    plan = ProductionPlan.objects.get(order_name=row['order_name'], customer=row['customer'])
+                    plan = ProductionPlan.objects.get(
+                        order_name=row['order_name'],
+                        customer=row['customer']
+                    )
                     operator = User.objects.get(username=row['operator_username'])
+
                     ShiftAssignment.objects.create(
                         production_plan=plan,
                         shift_date=shift_date,
@@ -85,18 +225,20 @@ class ShiftAssignmentUploadView(LoginRequiredMixin, View):
                         operator=operator,
                         planned_quantity=row['planned_quantity'],
                         notes=row.get('notes', ''),
-                        status=ShiftAssignment.Status.ASSIGNMENT
+                        status=ShiftAssignment.Status.ASSIGNMENT,
+                        created_by=request.user
                     )
                     created_count += 1
                 except ProductionPlan.DoesNotExist:
-                    errors.append(f"Строка {row_num}: План производства не найден (Заказ: {row.get('order_name')}, Заказчик: {row.get('customer')})")
+                    errors.append(f"Строка {row_num}: План производства не найден")
                 except User.DoesNotExist:
-                    errors.append(f"Строка {row_num}: Оператор с логином '{row.get('operator_username')}' не найден")
+                    errors.append(f"Строка {row_num}: Оператор не найден")
                 except ValueError as ve:
-                    errors.append(f"Строка {row_num}: Ошибка с датой: {ve}")
+                    errors.append(f"Строка {row_num}: {str(ve)}")
                 except Exception as e:
                     errors.append(f"Строка {row_num}: Ошибка: {str(e)}")
                     logger.error(f"Ошибка в строке {row_num}: {str(e)}")
+
             if created_count > 0:
                 messages.success(request, f"Успешно создано заданий: {created_count}")
             if errors:
@@ -105,13 +247,16 @@ class ShiftAssignmentUploadView(LoginRequiredMixin, View):
                     messages.error(request, err)
                 if len(errors) > 5:
                     messages.info(request, f"И ещё {len(errors) - 5} ошибок...")
+
             return redirect(self.success_url)
+
         except Exception as e:
             messages.error(request, f"Ошибка при обработке файла: {str(e)}")
-            logger.exception("Ошибка при загрузке сменных заданий")
+            logger.exception("Ошибка при загрузке файла с заданиями")
             return render(request, self.template_name, {'form': form})
 
     def parse_date(self, date_value):
+        """Парсинг даты из разных форматов"""
         if pd.isna(date_value):
             raise ValueError("Дата не может быть пустой")
         if isinstance(date_value, datetime):
@@ -124,91 +269,8 @@ class ShiftAssignmentUploadView(LoginRequiredMixin, View):
         raise ValueError(f"Неподдерживаемый формат даты: {date_value}")
 
 
-# Создание сменного задания
-class ShiftAssignmentCreateView(LoginRequiredMixin, CreateView):
-    model = ShiftAssignment
-    form_class = ShiftAssignmentForm
-    template_name = 'shift_assignment/create.html'
-    success_url = reverse_lazy('shift_assignment:list')
-
-    def form_valid(self, form):
-        messages.success(self.request, "Задание успешно создано")
-        return super().form_valid(form)
-
-
-# Обновление сменного задания
-class ShiftAssignmentUpdateView(LoginRequiredMixin, UpdateView):
-    model = ShiftAssignment
-    form_class = EditShiftAssignmentForm  # используем форму с нужными полями
-    template_name = 'shift_assignment/update.html'
-    success_url = reverse_lazy('shift_assignment:list')
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = "Редактирование задания"
-        return context
-
-
-# Удаление сменного задания
-class ShiftAssignmentDeleteView(LoginRequiredMixin, DeleteView):
-    model = ShiftAssignment
-    template_name = 'shift_assignment/delete.html'
-    success_url = reverse_lazy('shift_assignment:list')
-
-
-# Детализация сменного задания
-class ShiftAssignmentDetailView(LoginRequiredMixin, DetailView):
-    model = ShiftAssignment
-    template_name = 'shift_assignment/detail.html'
-    context_object_name = 'object'  # или 'assignment' - как вам удобнее
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        # Передаём форму с начальными данными, если пользователь оператор и задание не выполнено
-        if self.request.user.role == 'operator' and self.object.status != 'completed':
-            context['complete_form'] = UpdateShiftAssignmentForm(instance=self.object)
-        return context
-
-
-# Завершение задания через POST-запрос (AJAX)
-class CompleteAssignmentView(LoginRequiredMixin, View):
-    def post(self, request, pk):
-        assignment = get_object_or_404(ShiftAssignment, pk=pk)
-        form = UpdateShiftAssignmentForm(request.POST, instance=assignment)
-        if form.is_valid():
-            assignment = form.save(commit=False)
-            success, message = assignment.complete_assignment(assignment.actual_quantity, request.user)
-            if success:
-                messages.success(request, message)
-                return redirect('users:profile', username=request.user.username)
-            else:
-                messages.error(request, message)
-                return redirect('shift_assignment:detail', pk=pk)
-        else:
-            for field, errors in form.errors.items():
-                for error in errors:
-                    messages.error(request, f"{field}: {error}")
-            return redirect('shift_assignment:detail', pk=pk)
-
-
-# Архив сменных заданий
-class ShiftAssignmentArchiveView(LoginRequiredMixin, ListView):
-    model = ShiftAssignment
-    template_name = 'shift_assignment/archive.html'
-    context_object_name = 'assignments'
-    paginate_by = 20  # если нужно постраничное отображение
-
-    def get_queryset(self):
-        user = self.request.user
-        # Фильтрация по роли и статусу "completed"
-        if user.role == 'master':
-            return ShiftAssignment.objects.filter(operator=user, status='completed').order_by('-completed_at')
-        # Можно добавить другие роли и фильтры
-        return ShiftAssignment.objects.none()
-
-
-# Скачивание шаблона Excel
 def download_rus_template(request):
+    """Скачивание шаблона Excel"""
     df = pd.DataFrame(columns=[
         'Заказчик',
         'Наименование заказа',
@@ -224,15 +286,16 @@ def download_rus_template(request):
         'MS-2023-001',
         '15.05.2025',
         'day',
-        'Khasanov.N',
+        'operator1',
         100,
         'CNC-01',
         'Пример примечания'
     ]
+
     output = BytesIO()
-    writer = pd.ExcelWriter(output, engine='xlsxwriter')
-    df.to_excel(writer, index=False, sheet_name='Шаблон')
-    writer.close()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df.to_excel(writer, index=False, sheet_name='Шаблон')
+
     output.seek(0)
     response = HttpResponse(
         output.getvalue(),

@@ -1,0 +1,108 @@
+<div class="card mb-4">
+    <div class="card-header bg-light">
+        <h5 class="mb-0">
+            <button class="btn btn-link text-dark text-decoration-none"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#filtersCollapse"
+                    aria-expanded="false">
+                <i class="bi bi-funnel me-2"></i>Фильтры заданий
+                <span id="filtersToggleIcon" class="ms-2">
+        <i class="bi bi-chevron-down"></i>
+    </span>
+            </button>
+
+        </h5>
+    </div>
+
+    <div class="collapse" id="filtersCollapse">  <!-- убрали show, чтобы по умолчанию свернут -->
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <!-- Оператор -->
+                <div class="col-md-3">
+                    <label for="operatorFilter" class="form-label">Оператор</label>
+                    <select name="operator" id="operatorFilter" class="form-select">
+                        <option value="">Все операторы</option>
+                        {% for operator in operators %}
+                        <option value="{{ operator.username }}"
+                                {% if request.GET.operator == operator.username %}selected{% endif %}>
+                            {{ operator.get_full_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Заказчик -->
+                <div class="col-md-3">
+                    <label for="customerFilter" class="form-label">Заказчик</label>
+                    <select name="customer" id="customerFilter" class="form-select">
+                        <option value="">Все заказчики</option>
+                        {% for customer in customers %}
+                        <option value="{{ customer }}"
+                                {% if request.GET.customer == customer %}selected{% endif %}>
+                            {{ customer }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Станок -->
+                <div class="col-md-2">
+                    <label for="machineFilter" class="form-label">Станок</label>
+                    <select name="machine" id="machineFilter" class="form-select">
+                        <option value="">Все станки</option>
+                        {% for machine in machines %}
+                        <option value="{{ machine }}"
+                                {% if request.GET.machine == machine %}selected{% endif %}>
+                            {{ machine }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Дата от -->
+                <div class="col-md-2">
+                    <label for="dateFromFilter" class="form-label">Дата от</label>
+                    <input type="date" name="date_from" id="dateFromFilter"
+                           class="form-control" value="{{ request.GET.date_from }}">
+                </div>
+
+                <!-- Дата до -->
+                <div class="col-md-2">
+                    <label for="dateToFilter" class="form-label">Дата до</label>
+                    <input type="date" name="date_to" id="dateToFilter"
+                           class="form-control" value="{{ request.GET.date_to }}">
+                </div>
+
+                <!-- Кнопки -->
+                <div class="col-md-12 mt-3">
+                    <button type="submit" class="btn btn-primary me-2">
+                        <i class="bi bi-check-circle me-1"></i>Применить
+                    </button>
+                    <a href="{% url 'users:profile' profile_user.username %}"
+                       class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle me-1"></i>Сбросить
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const collapseElement = document.getElementById('filtersCollapse');
+        const toggleButton = collapseElement.previousElementSibling.querySelector('button');
+        const toggleIcon = document.getElementById('filtersToggleIcon').querySelector('i');
+
+        collapseElement.addEventListener('show.bs.collapse', function () {
+            toggleIcon.classList.remove('bi-chevron-down');
+            toggleIcon.classList.add('bi-chevron-up');
+        });
+
+        collapseElement.addEventListener('hide.bs.collapse', function () {
+            toggleIcon.classList.remove('bi-chevron-up');
+            toggleIcon.classList.add('bi-chevron-down');
+        });
+    });
+</script>

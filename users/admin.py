@@ -1,25 +1,21 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
+from django.utils.translation import gettext_lazy as _
+
 from users.models import User
 
 
 @admin.register(User)
-class UserAdmin(admin.ModelAdmin):
-    """
-    Административный интерфейс для модели User.
-
-    Этот класс определяет, какие поля будут отображаться в списке
-    объектов модели User в административной панели, а также
-    предоставляет возможность поиска и фильтрации.
-    """
-
-    # Поля, которые будут отображаться в списке объектов
-    list_display = ('username', 'last_name', 'first_name', 'role', 'pk', 'is_active')
-
-    # Поля, по которым можно фильтровать список объектов
-    list_filter = ('last_name', 'is_active')
-
-    # Поля, по которым можно осуществлять поиск
-    search_fields = ('username', 'last_name', 'first_name')
-
-    # Сортировка списка объектов по фамилии и имени
-    ordering = ('last_name', 'first_name')
+class UserAdmin(UserAdmin):
+    list_display = ('username', 'email', 'get_full_name', 'role', 'master')
+    list_filter = ('role', 'master')
+    search_fields = ('username', 'first_name', 'last_name', 'email')
+    fieldsets = (
+        (None, {'fields': ('username', 'password')}),
+        (_('Personal info'), {'fields': ('first_name', 'last_name', 'email', 'phone')}),
+        (_('Permissions'), {
+            'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions'),
+        }),
+        (_('Work info'), {'fields': ('role', 'master')}),
+        (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
+    )

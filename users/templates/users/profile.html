@@ -1,52 +1,50 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container mt-5">
-    <!-- Информация о пользователе -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h4>Профиль {{ profile_user.get_role_display }}</h4>
+<div class="container mt-4">
+    <!-- Карточка профиля -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">Профиль {{ profile_user.get_full_name }}</h4>
         </div>
         <div class="card-body">
             <div class="row">
                 <div class="col-md-6">
-                    <p><strong>Имя:</strong> {{ profile_user.get_full_name }}</p>
                     <p><strong>Должность:</strong> {{ profile_user.get_role_display }}</p>
+                    <p><strong>Email:</strong> {{ profile_user.email }}</p>
                 </div>
                 <div class="col-md-6">
-                    <p><strong>Email:</strong> {{ profile_user.email }}</p>
                     <p><strong>Телефон:</strong> {{ profile_user.phone|default:"не указан" }}</p>
+                    {% if profile_user == request.user %}
+                    <a href="{% url 'users:update' profile_user.username %}"
+                       class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-pencil-square"></i> Редактировать
+                    </a>
+                    {% endif %}
                 </div>
             </div>
         </div>
-        {% if profile_user == request.user or request.user.is_superuser %}
-        <div class="card-footer d-flex gap-2">
-            <a href="{% url 'users:update' profile_user.username %}" class="btn btn-outline-primary">
-                <i class="bi bi-pencil"></i> Редактировать профиль
-            </a>
-            {% if request.user.is_superuser %}
-            <a href="{% url 'users:register' %}" class="btn btn-success">
-                <i class="bi bi-person-plus"></i> Добавить пользователя
-            </a>
-            {% endif %}
-        </div>
-        {% endif %}
     </div>
 
-    <!-- Текущие задания (сокращённый список) -->
-    <div class="card mb-4">
-        <div class="card-header {% if profile_user.role == 'master' %}bg-primary text-white{% endif %}">
-            <h4 class="mb-0">Текущие задания</h4>
+    <!-- Фильтры (только для администраторов) -->
+    {% if request.user.role in 'master director admin' %}
+        {% include 'users/filters/assignment_filters.html' %}
+    {% endif %}
+
+    <!-- Текущие задания -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0"><i class="bi bi-list-task me-2"></i>Текущие задания</h5>
         </div>
         <div class="card-body">
             {% if active_assignments %}
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead>
+                <table class="table table-hover">
+                    <thead class="table-light">
                         <tr>
                             <th>Дата</th>
                             <th>Заказчик</th>
-                            <th>ФИО оператора</th>
+                            <th>Оператор</th>
                             <th>Станок</th>
                             <th>Действия</th>
                         </tr>
@@ -59,7 +57,8 @@
                             <td>{{ assignment.operator.get_full_name }}</td>
                             <td>{{ assignment.machine_number }}</td>
                             <td>
-                                <a href="{% url 'shift_assignment:detail' assignment.id %}" class="btn btn-sm btn-info" title="Просмотр">
+                                <a href="{% url 'shift_assignment:detail' assignment.id %}"
+                                   class="btn btn-sm btn-outline-primary">
                                     <i class="bi bi-eye"></i>
                                 </a>
                             </td>
@@ -69,29 +68,30 @@
                 </table>
             </div>
             {% else %}
-            <div class="alert alert-info">
-                Нет активных заданий
+            <div class="alert alert-info mb-0">
+                <i class="bi bi-info-circle me-2"></i>Нет активных заданий
             </div>
             {% endif %}
         </div>
     </div>
 
-    <!-- Выполненные задания (также можно сократить) -->
+    <!-- Выполненные задания -->
     {% if completed_assignments %}
-    <div class="card mb-4">
+    <div class="card shadow-sm">
         <div class="card-header bg-secondary text-white">
-            <h4>Последние выполненные задания</h4>
+            <h5 class="mb-0"><i class="bi bi-archive me-2"></i>Выполненные задания</h5>
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead>
+                <table class="table table-hover">
+                    <thead class="table-light">
                         <tr>
                             <th>Дата</th>
                             <th>Заказчик</th>
-                            <th>ФИО оператора</th>
+                            <th>Оператор</th>
                             <th>Станок</th>
-                            <th>Дата выполнения</th>
+                            <th>Выполнено</th>
+                            <th>Действия</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -101,21 +101,27 @@
                             <td>{{ assignment.production_plan.customer }}</td>
                             <td>{{ assignment.operator.get_full_name }}</td>
                             <td>{{ assignment.machine_number }}</td>
+                            <td>{{ assignment.completed_at|date:"d.m.Y H:i" }}</td>
                             <td>
-                                {% if assignment.completed_at %}
-                                    {{ assignment.completed_at|date:"d.m.Y H:i" }}
-                                {% else %}
-                                    Не указана
-                                {% endif %}
+                                <a href="{% url 'shift_assignment:completed' %}"
+                                   class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-archive"></i>
+                                </a>
                             </td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
-            <a href="{% url 'shift_assignment:archive' %}" class="btn btn-outline-secondary mt-3">
-            <i class="bi bi-clock-history"></i> Весь архив
-            </a>
+
+            <div class="d-flex justify-content-between mt-3">
+                <a href="{% url 'shift_assignment:completed' %}" class="btn btn-outline-dark">
+                    <i class="bi bi-clock-history me-1"></i>Весь архив
+                </a>
+                <span class="text-muted">
+                    Показано {{ completed_assignments|length }} из {{ completed_assignments_count }}
+                </span>
+            </div>
         </div>
     </div>
     {% endif %}

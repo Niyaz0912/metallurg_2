@@ -13,11 +13,13 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied
 from django.utils import timezone
 from django.shortcuts import get_object_or_404
-
+from django.db.models import Q
+from django.utils import timezone
+from datetime import datetime
 from .forms import RegistrationForm, UserUpdateForm
 from .models import User
 from shift_assignment.models import ShiftAssignment
-
+from production_plan.models import ProductionPlan
 
 class RoleRequiredMixin(UserPassesTestMixin):
     """Миксин для проверки роли пользователя"""
@@ -69,27 +71,97 @@ class ProfileView(LoginRequiredMixin, DetailView):
         user = self.request.user
         profile_user = self.get_object()
 
-        if user.role == 'operator' and user == profile_user:
-            context['active_assignments'] = ShiftAssignment.objects.filter(
-                operator__username=user.username,
-                status=ShiftAssignment.Status.ASSIGNMENT
-            ).order_by('-shift_date')
+        # Получаем данные для фильтров (только для мастеров/директоров)
+        if user.role in ['master', 'director', 'admin']:
+            context = self._prepare_filters(context)
 
-            context['completed_assignments'] = ShiftAssignment.objects.filter(
-                operator__username=user.username,
-                status=ShiftAssignment.Status.COMPLETED
-            ).order_by('-completed_at')[:10]
-
-        elif user.role in ['master', 'director']:
-            context['active_assignments'] = ShiftAssignment.objects.filter(
-                status=ShiftAssignment.Status.ASSIGNMENT
-            ).order_by('-shift_date')
-
-            context['completed_assignments'] = ShiftAssignment.objects.filter(
-                status=ShiftAssignment.Status.COMPLETED
-            ).order_by('-completed_at')[:10]
+        # Фильтрация заданий
+        context.update(self._filter_assignments(user, profile_user))
 
         return context
+
+    def _prepare_filters(self, context):
+        """Подготовка данных для фильтров"""
+        # Операторы
+        context['operators'] = User.objects.filter(
+            role='operator'
+        ).order_by('last_name')
+
+        # Заказчики
+        context['customers'] = ProductionPlan.objects.filter(
+            shift_assignments__status=ShiftAssignment.Status.COMPLETED
+        ).values_list('customer', flat=True).distinct().order_by('customer')
+
+        # Станки
+        context['machines'] = ShiftAssignment.objects.exclude(
+            Q(machine_number__isnull=True) | Q(machine_number__exact='')
+        ).values_list('machine_number', flat=True).distinct().order_by('machine_number')
+
+        return context
+
+    def _filter_assignments(self, user, profile_user):
+        """Фильтрация заданий"""
+        result = {}
+
+        # Активные задания
+        active_assignments = ShiftAssignment.objects.filter(
+            status=ShiftAssignment.Status.ASSIGNMENT
+        ).select_related('production_plan', 'operator')
+
+        if user.role == 'operator' and user == profile_user:
+            active_assignments = active_assignments.filter(operator=user)
+
+        result['active_assignments'] = active_assignments.order_by('-shift_date')
+
+        # Выполненные задания
+        completed_assignments = ShiftAssignment.objects.filter(
+            status=ShiftAssignment.Status.COMPLETED
+        ).select_related('production_plan', 'operator')
+
+        # Применяем фильтры для мастеров/директоров
+        if user.role in ['master', 'director', 'admin']:
+            completed_assignments = self._apply_filters(completed_assignments)
+        elif user.role == 'operator' and user == profile_user:
+            completed_assignments = completed_assignments.filter(operator=user)
+
+        result['completed_assignments'] = completed_assignments.order_by('-completed_at')[:50]
+        result['completed_assignments_count'] = completed_assignments.count()
+
+        return result
+
+    def _apply_filters(self, queryset):
+        """Применение фильтров из GET-параметров"""
+        filters = Q()
+        request = self.request
+
+        # Фильтр по оператору
+        if operator := request.GET.get('operator'):
+            filters &= Q(operator__username=operator)
+
+        # Фильтр по заказчику
+        if customer := request.GET.get('customer'):
+            filters &= Q(production_plan__customer=customer)
+
+        # Фильтр по станку
+        if machine := request.GET.get('machine'):
+            filters &= Q(machine_number=machine)
+
+        # Фильтр по датам
+        if date_from := request.GET.get('date_from'):
+            try:
+                date_from = datetime.strptime(date_from, '%Y-%m-%d').date()
+                filters &= Q(shift_date__gte=date_from)
+            except ValueError:
+                pass
+
+        if date_to := request.GET.get('date_to'):
+            try:
+                date_to = datetime.strptime(date_to, '%Y-%m-%d').date()
+                filters &= Q(shift_date__lte=date_to)
+            except ValueError:
+                pass
+
+        return queryset.filter(filters)
 
 
 class LegacyProfileRedirectView(LoginRequiredMixin, RedirectView):

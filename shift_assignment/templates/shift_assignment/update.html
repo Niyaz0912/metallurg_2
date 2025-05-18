@@ -1,26 +1,10 @@
-{% extends 'base.html' %}
-{% load crispy_forms_tags %}
-
+{% extends "base.html" %}
 {% block content %}
-<div class="container mt-4">
-    <div class="card shadow-sm">
-        <div class="card-header bg-primary text-white">
-            <h4>Редактирование задания #{{ object.id }}</h4>
-        </div>
-        <div class="card-body">
-            <form method="post" enctype="multipart/form-data" novalidate>
-                {% csrf_token %}
-                {{ form|crispy }}
-                <div class="d-flex justify-content-between mt-4">
-                    <a href="{% url 'shift_assignment:detail' object.pk %}" class="btn btn-outline-secondary">
-                        <i class="bi bi-x-circle"></i> Отмена
-                    </a>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-save"></i> Сохранить
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+<h2>{{ title }}</h2>
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">Сохранить</button>
+    <a href="{% url 'shift_assignment:detail' object.id %}" class="btn btn-secondary">Отмена</a>
+</form>
 {% endblock %}

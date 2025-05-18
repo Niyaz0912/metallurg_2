@@ -74,6 +74,7 @@ class EditShiftAssignmentForm(StyleFormMixin, forms.ModelForm):
             'work_type',
             'planned_quantity',
             'drawing',
+            'notes',
         ]
         widgets = {
             'shift_date': forms.DateInput(attrs={'type': 'date'}),
@@ -102,4 +103,3 @@ class ExcelUploadForm(forms.Form):
             # if file.size > 5 * 1024 * 1024:
             #     raise forms.ValidationError(_('Размер файла не должен превышать 5 МБ'))
         return file
-
