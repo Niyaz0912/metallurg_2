@@ -142,7 +142,7 @@ class CompleteAssignmentView(LoginRequiredMixin, View):
         assignment = get_object_or_404(ShiftAssignment, pk=pk)
 
         # Проверяем права пользователя
-        if not (request.user == assignment.operator or request.user.is_superuser):
+        if not (request.user == assignment.operator or request.user.is_superuser or request.user.role == 'master'):
             messages.error(request, "У вас нет прав для завершения этого задания")
             return redirect('shift_assignment:detail', pk=pk)
 
@@ -225,8 +225,7 @@ class ShiftAssignmentUploadView(LoginRequiredMixin, View):
                         operator=operator,
                         planned_quantity=row['planned_quantity'],
                         notes=row.get('notes', ''),
-                        status=ShiftAssignment.Status.ASSIGNMENT,
-                        created_by=request.user
+                        status=ShiftAssignment.Status.ASSIGNMENT
                     )
                     created_count += 1
                 except ProductionPlan.DoesNotExist:

@@ -21,6 +21,7 @@ from .models import User
 from shift_assignment.models import ShiftAssignment
 from production_plan.models import ProductionPlan
 
+
 class RoleRequiredMixin(UserPassesTestMixin):
     """Миксин для проверки роли пользователя"""
     allowed_roles = []
@@ -61,7 +62,7 @@ class RegisterView(UserPassesTestMixin, CreateView):
 
 class ProfileView(LoginRequiredMixin, DetailView):
     model = User
-    template_name = 'users/profile.html'
+    template_name = 'users/profile.html'  # Главный шаблон-обертка
     context_object_name = 'profile_user'
     slug_field = 'username'
     slug_url_kwarg = 'username'
@@ -69,65 +70,74 @@ class ProfileView(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user = self.request.user
-        profile_user = self.get_object()
+        profile_user = self.get_object()  # Это ключевая строка
 
-        # Получаем данные для фильтров (только для мастеров/директоров)
+        context.update({
+            'profile_user': profile_user,
+            'can_edit_profile': user == profile_user or user.is_superuser,
+        })
+
+        # Получаем данные заданий
+        context.update(self._get_assignment_data(user, profile_user))
+
+        # Добавляем фильтры для администраторов
         if user.role in ['master', 'director', 'admin']:
-            context = self._prepare_filters(context)
+            context.update(self._get_filter_data())
 
-        # Фильтрация заданий
-        context.update(self._filter_assignments(user, profile_user))
+        role = profile_user.role if profile_user else None
 
-        return context
+        role_templates = {
+            'admin': 'users/profile_parts/admin.html',
+            'master': 'users/profile_parts/master.html',
+            'director': 'users/profile_parts/director.html',
+            'operator': 'users/profile_parts/operator.html',
+        }
 
-    def _prepare_filters(self, context):
-        """Подготовка данных для фильтров"""
-        # Операторы
-        context['operators'] = User.objects.filter(
-            role='operator'
-        ).order_by('last_name')
-
-        # Заказчики
-        context['customers'] = ProductionPlan.objects.filter(
-            shift_assignments__status=ShiftAssignment.Status.COMPLETED
-        ).values_list('customer', flat=True).distinct().order_by('customer')
-
-        # Станки
-        context['machines'] = ShiftAssignment.objects.exclude(
-            Q(machine_number__isnull=True) | Q(machine_number__exact='')
-        ).values_list('machine_number', flat=True).distinct().order_by('machine_number')
+        context['role_template'] = role_templates.get(role, 'users/roles/default.html')
 
         return context
 
-    def _filter_assignments(self, user, profile_user):
-        """Фильтрация заданий"""
-        result = {}
+    def _get_filter_data(self):
+        """Данные для фильтров (общие для мастеров/директоров/админов)"""
+        return {
+            'operators': User.objects.filter(role='operator').order_by('last_name'),
+            'customers': ProductionPlan.objects.filter(
+                shift_assignments__status=ShiftAssignment.Status.COMPLETED
+            ).values_list('customer', flat=True).distinct().order_by('customer'),
+            'machines': ShiftAssignment.objects.exclude(
+                Q(machine_number__isnull=True) | Q(machine_number__exact='')
+            ).values_list('machine_number', flat=True).distinct().order_by('machine_number'),
+        }
+
+    def _get_assignment_data(self, user, profile_user):
+        """Данные заданий с учетом роли и фильтров"""
+        data = {}
 
         # Активные задания
         active_assignments = ShiftAssignment.objects.filter(
-            status=ShiftAssignment.Status.ASSIGNMENT
+            status='assignment'  # Используем строковое значение для надежности
         ).select_related('production_plan', 'operator')
 
-        if user.role == 'operator' and user == profile_user:
-            active_assignments = active_assignments.filter(operator=user)
+        # Для мастера показываем все активные задания
+        if user.role == 'operator' or profile_user.role == 'operator':
+            active_assignments = active_assignments.filter(operator=profile_user)
 
-        result['active_assignments'] = active_assignments.order_by('-shift_date')
+        data['active_assignments'] = active_assignments.order_by('-shift_date')
 
         # Выполненные задания
         completed_assignments = ShiftAssignment.objects.filter(
-            status=ShiftAssignment.Status.COMPLETED
+            status='completed'
         ).select_related('production_plan', 'operator')
 
-        # Применяем фильтры для мастеров/директоров
         if user.role in ['master', 'director', 'admin']:
             completed_assignments = self._apply_filters(completed_assignments)
-        elif user.role == 'operator' and user == profile_user:
-            completed_assignments = completed_assignments.filter(operator=user)
+        elif user.role == 'operator' or profile_user.role == 'operator':
+            completed_assignments = completed_assignments.filter(operator=profile_user)
 
-        result['completed_assignments'] = completed_assignments.order_by('-completed_at')[:50]
-        result['completed_assignments_count'] = completed_assignments.count()
+        data['completed_assignments'] = completed_assignments.order_by('-completed_at')[:50]
+        data['completed_assignments_count'] = completed_assignments.count()
 
-        return result
+        return data
 
     def _apply_filters(self, queryset):
         """Применение фильтров из GET-параметров"""

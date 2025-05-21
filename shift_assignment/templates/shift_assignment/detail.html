@@ -1,6 +1,8 @@
 {% extends "base.html" %}
+
 {% block content %}
 <h2>{{ title }}</h2>
+
 <table class="table">
     <tr><th>ID</th><td>{{ assignment.id }}</td></tr>
     <tr><th>Дата смены</th><td>{{ assignment.shift_date }}</td></tr>
@@ -22,17 +24,21 @@
         </td>
     </tr>
 </table>
-<a href="{% url 'shift_assignment:update' assignment.id %}" class="btn btn-warning">Изменить</a>
-<a href="{% url 'shift_assignment:delete' assignment.id %}" class="btn btn-danger">Удалить</a>
-<a href="{% url 'shift_assignment:active' %}" class="btn btn-secondary">К списку</a>
+
+<a href="{% url 'users:profile' assignment.operator.username %}" class="btn btn-secondary">К списку</a>
+
+{% if request.user.role == 'master' or request.user.is_superuser %}
+    <a href="{% url 'shift_assignment:update' assignment.id %}" class="btn btn-warning">Изменить</a>
+    <a href="{% url 'shift_assignment:delete' assignment.id %}" class="btn btn-danger">Удалить</a>
+{% endif %}
 
 {% if complete_form %}
-<hr>
-<h4>Завершить задание</h4>
-<form method="post" action="{% url 'shift_assignment:complete' assignment.id %}">
-    {% csrf_token %}
-    {{ complete_form.as_p }}
-    <button type="submit" class="btn btn-success">Завершить</button>
-</form>
+    <hr>
+    <h4>Завершить задание</h4>
+    <form method="post" action="{% url 'shift_assignment:complete' assignment.id %}">
+        {% csrf_token %}
+        {{ complete_form.as_p }}
+        <button type="submit" class="btn btn-success">Завершить</button>
+    </form>
 {% endif %}
 {% endblock %}

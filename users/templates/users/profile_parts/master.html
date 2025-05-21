@@ -1,0 +1,121 @@
+{# Кнопки действий #}
+<div class="mb-4">
+    <div class="d-flex justify-content-between mb-3">
+        <a href="{% url 'shift_assignment:create' %}" class="btn btn-success">
+            <i class="bi bi-plus-circle"></i> Создать задание
+        </a>
+        <div>
+            <a href="{% url 'shift_assignment:upload' %}" class="btn btn-primary me-2">
+                <i class="bi bi-upload"></i> Загрузить задания
+            </a>
+            <a href="{% url 'shift_assignment:download_template' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-download"></i> Шаблон Excel
+            </a>
+        </div>
+    </div>
+</div>
+
+{# Активные задания #}
+<div class="card mb-4 shadow-sm">
+    <div class="card-header bg-info text-white">
+        <h5 class="mb-0"><i class="bi bi-list-task me-2"></i>Активные задания</h5>
+    </div>
+    <div class="card-body">
+        {% if active_assignments %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Дата</th>
+                        <th>Тип смены</th>
+                        <th>Станок</th>
+                        <th>Оператор</th>
+                        <th>Заказчик</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for assignment in active_assignments %}
+                    <tr>
+                        <td>{{ assignment.shift_date|date:"d.m.Y" }}</td>
+                        <td>{{ assignment.get_shift_type_display }}</td>
+                        <td>{{ assignment.machine_number|default:"-" }}</td>
+                        <td>{{ assignment.operator.get_full_name }}</td>
+                        <td>{{ assignment.production_plan.customer }}</td>
+                        <td>
+                            <a href="{% url 'shift_assignment:detail' assignment.id %}"
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a href="{% url 'shift_assignment:update' assignment.id %}"
+                               class="btn btn-sm btn-outline-warning">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info mb-0">
+            <i class="bi bi-info-circle me-2"></i>Нет активных заданий
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{# Выполненные задания #}
+<div class="card shadow-sm">
+    <div class="card-header bg-secondary text-white">
+        <h5 class="mb-0"><i class="bi bi-archive me-2"></i>Выполненные задания</h5>
+    </div>
+    <div class="card-body">
+        {% if completed_assignments %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Дата</th>
+                        <th>Станок</th>
+                        <th>Оператор</th>
+                        <th>Заказчик</th>
+                        <th>Выполнено</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for assignment in completed_assignments %}
+                    <tr>
+                        <td>{{ assignment.shift_date|date:"d.m.Y" }}</td>
+                        <td>{{ assignment.machine_number|default:"-" }}</td>
+                        <td>{{ assignment.operator.get_full_name }}</td>
+                        <td>{{ assignment.production_plan.customer }}</td>
+                        <td>{{ assignment.completed_at|date:"d.m.Y H:i" }}</td>
+                        <td>
+                            <a href="{% url 'shift_assignment:detail' assignment.id %}"
+                               class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="d-flex justify-content-between mt-3">
+            <a href="{% url 'shift_assignment:completed' %}" class="btn btn-outline-dark">
+                <i class="bi bi-clock-history me-1"></i>Весь архив
+            </a>
+            <span class="text-muted">
+                Показано {{ completed_assignments|length }} из {{ completed_assignments_count }}
+            </span>
+        </div>
+        {% else %}
+        <div class="alert alert-info mb-0">
+            <i class="bi bi-info-circle me-2"></i>Нет выполненных заданий
+        </div>
+        {% endif %}
+    </div>
+</div>

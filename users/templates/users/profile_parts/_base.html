@@ -1,0 +1,22 @@
+<div class="card mb-4 shadow-sm">
+    <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">Основная информация</h4>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>Должность:</strong> {{ profile_user.get_role_display }}</p>
+                <p><strong>Email:</strong> {{ profile_user.email }}</p>
+            </div>
+            <div class="col-md-6">
+                <p><strong>Телефон:</strong> {{ profile_user.phone|default:"не указан" }}</p>
+                {% if can_edit_profile %}
+                <a href="{% url 'users:update' profile_user.username %}"
+                   class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-pencil-square"></i> Редактировать
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
