@@ -1,42 +1,54 @@
-<table class="table table-striped">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Дата смены</th>
-            <th>Смена</th>
-            <th>Станок</th>
-            <th>Оператор</th>
-            <th>План</th>
-            <th>Факт</th>
-            <th>Статус</th>
-            <th>Действия</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for assignment in assignments %}
-        <tr>
-            <td>{{ assignment.id }}</td>
-            <td>{{ assignment.shift_date }}</td>
-            <td>{{ assignment.get_shift_type_display }}</td>
-            <td>{{ assignment.machine_number }}</td>
-            <td>{{ assignment.operator.get_full_name }}</td>
-            <td>{{ assignment.planned_quantity }}</td>
-            <td>{{ assignment.actual_quantity }}</td>
-            <td>{{ assignment.get_status_display }}</td>
-            <td>
-                <a href="{% url 'shift_assignment:detail' assignment.id %}" class="btn btn-primary btn-sm">Подробнее</a>
-
-                {% if request.user.role == 'master' or request.user.is_superuser %}
-                    <a href="{% url 'shift_assignment:update' assignment.id %}" class="btn btn-warning btn-sm">Изменить</a>
-                    <a href="{% url 'shift_assignment:delete' assignment.id %}" class="btn btn-danger btn-sm">Удалить</a>
-                {% endif %}
-
-            </td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="9" class="text-center">Нет заданий для отображения</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+{% block content %}
+<div class="container mt-4">
+    <table class="table table-striped" style="table-layout: fixed; width: 100%">
+        <thead>
+            <tr>
+                <th style="width: 5%; border-right: 1px solid #dee2e6">ID</th>
+                <th style="width: 10%; border-right: 1px solid #dee2e6">Дата</th>
+                <th style="width: 12%; border-right: 1px solid #dee2e6">Смена</th>
+                <th style="width: 10%; border-right: 1px solid #dee2e6">Станок</th>
+                <th style="width: 15%; border-right: 1px solid #dee2e6">Оператор</th>
+                <th style="width: 8%; border-right: 1px solid #dee2e6">План</th>
+                <th style="width: 8%; border-right: 1px solid #dee2e6">Факт</th>
+                <th style="width: 12%; border-right: 1px solid #dee2e6">Статус</th>
+                <th style="width: 20%">Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for assignment in assignments %}
+            <tr>
+                <td style="border-right: 1px solid #dee2e6">{{ assignment.id }}</td>
+                <td style="border-right: 1px solid #dee2e6">{{ assignment.shift_date|date:"d.m.Y" }}</td>
+                <td style="border-right: 1px solid #dee2e6">
+                    {% if assignment.shift_type == 'night' %}
+                        20:00-08:00
+                    {% elif assignment.shift_type == 'day' %}
+                        08:00-20:00
+                    {% else %}
+                        {{ assignment.get_shift_type_display }}
+                    {% endif %}
+                </td>
+                <td style="border-right: 1px solid #dee2e6">{{ assignment.machine_number }}</td>
+                <td style="border-right: 1px solid #dee2e6">{{ assignment.operator.get_full_name }}</td>
+                <td style="border-right: 1px solid #dee2e6">{{ assignment.planned_quantity }}</td>
+                <td style="border-right: 1px solid #dee2e6">{{ assignment.actual_quantity|default:"-" }}</td>
+                <td style="border-right: 1px solid #dee2e6">{{ assignment.get_status_display }}</td>
+                <td>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <a href="{% url 'shift_assignment:detail' assignment.id %}" class="btn btn-primary">Подробнее</a>
+                        {% if request.user.role == 'master' or request.user.is_superuser %}
+                            <a href="{% url 'shift_assignment:update' assignment.id %}" class="btn btn-warning">Изменить</a>
+                            <a href="{% url 'shift_assignment:delete' assignment.id %}" class="btn btn-danger">Удалить</a>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="9" class="text-center">Нет заданий</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
