@@ -13,5 +13,7 @@ urlpatterns = [
     path('<int:pk>/complete/', views.CompleteAssignmentView.as_view(), name='complete'),
     path('upload/', views.ShiftAssignmentUploadView.as_view(), name='upload'),
     path('download_template/', views.download_rus_template, name='download_template'),
+    path('delete-all/', views.delete_all_assignments, name='delete_all'),
 ]
+
 

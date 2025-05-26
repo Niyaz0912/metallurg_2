@@ -6,6 +6,7 @@ import pandas as pd
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
@@ -135,6 +136,25 @@ class ShiftAssignmentDeleteView(LoginRequiredMixin, DeleteView):
         return super().delete(request, *args, **kwargs)
 
 
+@login_required
+def delete_all_assignments(request):
+    if request.method == 'POST':
+        try:
+            active_assignments = ShiftAssignment.objects.filter(status=ShiftAssignment.Status.ASSIGNMENT)
+            count = active_assignments.count()
+            active_assignments.delete()
+
+            messages.success(request, f'Успешно удалено {count} активных заданий')
+            # Редирект по URL профиля мастера
+            return redirect('/users/profile/master/')
+
+        except Exception as e:
+            messages.error(request, f'Ошибка при удалении заданий: {str(e)}')
+            return redirect('/users/profile/master/')
+
+    return redirect('/users/profile/master/')
+
+
 class CompleteAssignmentView(LoginRequiredMixin, View):
     """Завершение задания"""
 
@@ -169,7 +189,7 @@ class CompleteAssignmentView(LoginRequiredMixin, View):
 class ShiftAssignmentUploadView(LoginRequiredMixin, View):
     """Загрузка заданий из Excel"""
     template_name = 'shift_assignment/upload.html'
-    success_url = reverse_lazy('shift_assignment:active')
+    success_url = '/users/profile/master/'  # <-- меняем на URL профиля мастера
 
     column_mapping = {
         'Наименование заказа': 'order_name',
@@ -247,7 +267,7 @@ class ShiftAssignmentUploadView(LoginRequiredMixin, View):
                 if len(errors) > 5:
                     messages.info(request, f"И ещё {len(errors) - 5} ошибок...")
 
-            return redirect(self.success_url)
+            return redirect(self.success_url)  # <-- используем URL профиля мастера
 
         except Exception as e:
             messages.error(request, f"Ошибка при обработке файла: {str(e)}")
