@@ -3,16 +3,16 @@
 {% debug %}
 
 {% block content %}
-<div class="container mt-4">
-    {# Основная информация #}
-    {% include 'users/profile_parts/_base.html' %}
 
-    {# Ролевой контент (например, operator.html, master.html и т.д.) #}
-    {% include role_template %}
+{# Основная информация #}
+{% include 'users/profile_parts/_base.html' %}
 
-    {# Фильтры для администраторов #}
-    {% if request.user.role in 'master director admin' %}
-        {% include 'users/filters/assignment_filters.html' %}
-    {% endif %}
-</div>
+{# Ролевой контент (например, operator.html, master.html и т.д.) #}
+{% include role_template %}
+
+{# Фильтры для администраторов #}
+{% if request.user.role in 'master director admin' %}
+{% include 'users/filters/assignment_filters.html' %}
+{% endif %}
+
 {% endblock %}
