@@ -96,3 +96,20 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 200);
     });
 });
+
+// Фильтры для сменных заданий
+document.addEventListener('DOMContentLoaded', function () {
+        const collapseElement = document.getElementById('filtersCollapse');
+        const toggleButton = collapseElement.previousElementSibling.querySelector('button');
+        const toggleIcon = document.getElementById('filtersToggleIcon').querySelector('i');
+
+        collapseElement.addEventListener('show.bs.collapse', function () {
+            toggleIcon.classList.remove('bi-chevron-down');
+            toggleIcon.classList.add('bi-chevron-up');
+        });
+
+        collapseElement.addEventListener('hide.bs.collapse', function () {
+            toggleIcon.classList.remove('bi-chevron-up');
+            toggleIcon.classList.add('bi-chevron-down');
+        });
+    });
