@@ -113,27 +113,35 @@ class ProfileView(LoginRequiredMixin, DetailView):
         """Данные заданий с учетом роли и фильтров"""
         data = {}
 
-        # Активные задания
+        # Базовые querysets
         active_assignments = ShiftAssignment.objects.filter(
-            status='assignment'  # Используем строковое значение для надежности
+            status='assignment'
         ).select_related('production_plan', 'operator')
 
-        # Для мастера показываем все активные задания
-        if user.role == 'operator' or profile_user.role == 'operator':
-            active_assignments = active_assignments.filter(operator=profile_user)
-
-        data['active_assignments'] = active_assignments.order_by('-shift_date')
-
-        # Выполненные задания
         completed_assignments = ShiftAssignment.objects.filter(
             status='completed'
         ).select_related('production_plan', 'operator')
 
-        if user.role in ['master', 'director', 'admin']:
-            completed_assignments = self._apply_filters(completed_assignments)
-        elif user.role == 'operator' or profile_user.role == 'operator':
+        # Логика для оператора
+        if user.role == 'operator' or profile_user.role == 'operator':
+            active_assignments = active_assignments.filter(operator=profile_user)
             completed_assignments = completed_assignments.filter(operator=profile_user)
 
+        # Логика для мастера/директора/админа
+        elif user.role in ['master', 'director', 'admin']:
+            # Если смотрим свой профиль - показываем все задания
+            if user == profile_user:
+                completed_assignments = self._apply_filters(completed_assignments)
+            # Если смотрим профиль оператора - показываем его задания
+            elif profile_user.role == 'operator':
+                active_assignments = active_assignments.filter(operator=profile_user)
+                completed_assignments = completed_assignments.filter(operator=profile_user)
+            # Иначе применяем общие фильтры
+            else:
+                completed_assignments = self._apply_filters(completed_assignments)
+
+        # Сортировка и ограничение
+        data['active_assignments'] = active_assignments.order_by('-shift_date')
         data['completed_assignments'] = completed_assignments.order_by('-completed_at')[:50]
         data['completed_assignments_count'] = completed_assignments.count()
 
