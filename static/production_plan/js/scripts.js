@@ -1,14 +1,14 @@
-// Основная функция при загрузке документа
+// Основная функция, которая выполняется после полной загрузки DOM
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Документ загружен');
 
-    // Инициализация всплывающих подсказок Bootstrap
+    // Инициализация всех всплывающих подсказок Bootstrap на странице
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
+    tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+        new bootstrap.Tooltip(tooltipTriggerEl);
     });
 
-    // Обработка всех кнопок
+    // Добавляем обработчики клика на все кнопки с классом .btn
     const buttons = document.querySelectorAll('.btn');
     buttons.forEach(button => {
         button.addEventListener('click', function() {
@@ -16,21 +16,22 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Анимация карточек при прокрутке
+    // Функция анимации карточек при прокрутке страницы
     const animateOnScroll = function() {
         const cards = document.querySelectorAll('.card');
         cards.forEach(card => {
-            const cardPosition = card.getBoundingClientRect().top;
-            const screenPosition = window.innerHeight / 1.3;
+            const cardPosition = card.getBoundingClientRect().top; // Позиция карточки относительно видимой части окна
+            const screenPosition = window.innerHeight / 1.3;       // Точка срабатывания анимации (примерно 77% высоты экрана)
 
             if (cardPosition < screenPosition) {
+                // Если карточка видна достаточно высоко, применяем анимацию появления
                 card.style.opacity = '1';
                 card.style.transform = 'translateY(0)';
             }
         });
     };
 
-    // Инициализация анимации
+    // Инициализация начальных стилей для всех карточек (прозрачность и смещение вниз)
     const cards = document.querySelectorAll('.card');
     cards.forEach(card => {
         card.style.opacity = '0';
@@ -38,6 +39,60 @@ document.addEventListener('DOMContentLoaded', function() {
         card.style.transition = 'all 0.6s ease';
     });
 
+    // Запускаем анимацию при загрузке страницы и при прокрутке
     window.addEventListener('scroll', animateOnScroll);
-    animateOnScroll(); // Запустить при загрузке
+    animateOnScroll();
+});
+
+// Функция подтверждения удаления всех активных заданий
+function confirmClearAssignments(deleteUrl, csrfToken) {
+    if (confirm('Удалить ВСЕ активные задания? Действие нельзя отменить!')) {
+        // Создаём форму для отправки POST-запроса с CSRF-токеном
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = deleteUrl;
+        form.innerHTML = `<input type="hidden" name="csrfmiddlewaretoken" value="${csrfToken}">`;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Обработчик для иконки сворачивания/разворачивания активных и выполненных заданий
+document.addEventListener('DOMContentLoaded', function() {
+    // Активные задания
+    const toggleActiveBtn = document.getElementById('toggleActiveBtn');
+    const iconActive = document.getElementById('iconActive');
+    const activeCollapse = document.getElementById('active-assignments');
+
+    toggleActiveBtn.addEventListener('click', function() {
+        // Задержка нужна, чтобы дождаться завершения анимации Bootstrap Collapse
+        setTimeout(() => {
+            if (activeCollapse.classList.contains('show')) {
+                // Если блок развернут — показываем стрелку вверх
+                iconActive.classList.remove('bi-chevron-down');
+                iconActive.classList.add('bi-chevron-up');
+            } else {
+                // Если свернут — стрелка вниз
+                iconActive.classList.remove('bi-chevron-up');
+                iconActive.classList.add('bi-chevron-down');
+            }
+        }, 200);
+    });
+
+    // Выполненные задания
+    const toggleCompletedBtn = document.getElementById('toggleCompletedBtn');
+    const iconCompleted = document.getElementById('iconCompleted');
+    const completedCollapse = document.getElementById('completed-assignments');
+
+    toggleCompletedBtn.addEventListener('click', function() {
+        setTimeout(() => {
+            if (completedCollapse.classList.contains('show')) {
+                iconCompleted.classList.remove('bi-chevron-down');
+                iconCompleted.classList.add('bi-chevron-up');
+            } else {
+                iconCompleted.classList.remove('bi-chevron-up');
+                iconCompleted.classList.add('bi-chevron-down');
+            }
+        }, 200);
+    });
 });

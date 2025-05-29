@@ -170,6 +170,44 @@ footer {
     box-shadow: 0 -2px 8px rgba(44,62,80,0.08);
 }
 
+/* Таблицы */
+.table-responsive {
+    overflow-x: auto;
+    max-width: 100%;
+}
+
+.table {
+    width: 100%;
+    table-layout: fixed;
+    word-wrap: break-word;
+}
+
+/* Узкие колонки */
+.table th:nth-child(1), .table td:nth-child(1) { /* Дата */
+    width: 120px; max-width: 120px; white-space: nowrap;
+}
+.table th:nth-child(2), .table td:nth-child(2) { /* Смена */
+    width: 70px; max-width: 70px; white-space: nowrap;
+}
+.table th:nth-child(3), .table td:nth-child(3) { /* Станок */
+    width: 100px; max-width: 100px; white-space: nowrap;
+}
+/* Для таблицы с завершено */
+.table th:nth-child(6), .table td:nth-child(6) { /* Завершено */
+    width: 140px; max-width: 140px; white-space: nowrap;
+}
+.table th:last-child, .table td:last-child { /* Действия */
+    width: 120px; max-width: 120px; white-space: nowrap;
+}
+
+td, th {
+    white-space: nowrap;
+}
+
+.btn-group-sm .btn {
+    padding: 0.25rem 0.5rem;
+}
+
 /* Адаптивность */
 @media (max-width: 768px) {
     .container {
@@ -181,49 +219,27 @@ footer {
     .navbar-brand {
         font-size: 1.1rem;
     }
+    .table-responsive {
+        overflow-x: auto;
+    }
+    .table th, .table td {
+        white-space: nowrap;
+    }
+    /* Узкие колонки на мобильном */
+    .table th:nth-child(1), .table td:nth-child(1) { width: 55px; max-width: 55px;}
+    .table th:nth-child(2), .table td:nth-child(2) { width: 43px; max-width: 43px;}
+    .table th:nth-child(3), .table td:nth-child(3) { width: 42px; max-width: 42px;}
+    .table th:nth-child(6), .table td:nth-child(6) { width: 70px; max-width: 70px;}
+    .table th:last-child, .table td:last-child { width: 56px; max-width: 56px;}
+    /* Скрываем длинные версии, показываем короткие */
+    .d-mobile-none { display: none !important; }
+    .d-mobile-inline { display: inline !important; }
 }
 
-.table {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  overflow: hidden;
-  font-family: Arial, sans-serif;
-}
+/* По умолчанию показываем длинные версии, короткие скрываем */
+.d-mobile-inline { display: none; }
+.d-mobile-none { display: inline; }
 
-.table-row {
-  display: flex;
-  border-bottom: 1px solid #ccc;
-}
-
-.table-row.table-header {
-  background-color: #f0f0f0;
-  font-weight: bold;
-}
-
-.table-cell {
-  flex: 1; /* равная ширина ячеек */
-  padding: 8px 12px;
-  border-right: 1px solid #ccc;
-  box-sizing: border-box;
-  word-break: break-word;
-}
-
-/* Убираем правую границу у последней ячейки в строке */
-.table-row .table-cell:last-child {
-  border-right: none;
-}
-
-/* Можно задать разные пропорции ширины ячеек */
-.table-cell:nth-child(1) { flex: 2; } /* Название заказа шире */
-.table-cell:nth-child(4), /* Количество */
-.table-cell:nth-child(5), /* Прогресс */
-.table-cell:nth-child(6)  /* Дедлайн */ {
-  flex: 1;
-  text-align: center;
-}
 
 
 /* Вариант 1 Минималистичный светлый:
