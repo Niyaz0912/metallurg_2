@@ -1,10 +1,71 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+{% block content %}
+<div class="container mt-4">
+    <h1>Профиль директора по производству</h1>
 
-</body>
-</html>
+    <!-- KPI по участкам -->
+    <section class="mb-5">
+        <h2>KPI по участкам</h2>
+        <ul>
+            {% for section in sections_kpi %}
+            <li>
+                <strong>{{ section.name }}</strong><br>
+                Выполнение плана: {{ section.plan_completion }}%<br>
+                Брак: {{ section.defect_rate }}%<br>
+                Загрузка оборудования: {{ section.equipment_load }}%
+            </li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <!-- Ближайшие отгрузки -->
+    <section class="mb-5">
+        <h2>Ближайшие отгрузки</h2>
+        {% if shipments %}
+            <ul>
+                {% for shipment in shipments %}
+                <li>{{ shipment.date|date:"d.m.Y" }} — {{ shipment.customer }} ({{ shipment.status }}) {% if shipment.comment %}- {{ shipment.comment }}{% endif %}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>Нет запланированных отгрузок.</p>
+        {% endif %}
+    </section>
+
+    <!-- Задачи из других департаментов -->
+    <section class="mb-5">
+        <h2>Задачи из других департаментов</h2>
+        {% if tasks %}
+            <ul>
+                {% for task in tasks %}
+                <li>{{ task.title }} — срок: {{ task.deadline|date:"d.m.Y" }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>Нет текущих задач.</p>
+        {% endif %}
+    </section>
+
+    <!-- Документы на подпись и печать -->
+    <section>
+        <h2>Документы на подпись и печать</h2>
+        {% if documents %}
+            <ul>
+                {% for doc in documents %}
+                <li>
+                    {{ doc.title }} ({{ doc.created_at|date:"d.m.Y" }}) — статус: {{ doc.status }}
+                    {% if doc.status == "Ожидает подписи" %}
+                        <a href="{{ doc.file_url }}" target="_blank">Просмотр</a> |
+                        <a href="#">Подписать</a>
+                    {% else %}
+                        <a href="{{ doc.file_url }}" target="_blank">Просмотр</a>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>Нет документов для подписи.</p>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}
+
