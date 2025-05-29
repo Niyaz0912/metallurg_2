@@ -1,54 +1,123 @@
 {% block content %}
-<div class="container mt-4">
-    <table class="table table-striped" style="table-layout: fixed; width: 100%">
-        <thead>
-            <tr>
-                <th style="width: 5%; border-right: 1px solid #dee2e6">ID</th>
-                <th style="width: 10%; border-right: 1px solid #dee2e6">Дата</th>
-                <th style="width: 12%; border-right: 1px solid #dee2e6">Смена</th>
-                <th style="width: 10%; border-right: 1px solid #dee2e6">Станок</th>
-                <th style="width: 15%; border-right: 1px solid #dee2e6">Оператор</th>
-                <th style="width: 8%; border-right: 1px solid #dee2e6">План</th>
-                <th style="width: 8%; border-right: 1px solid #dee2e6">Факт</th>
-                <th style="width: 12%; border-right: 1px solid #dee2e6">Статус</th>
-                <th style="width: 20%">Действия</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for assignment in assignments %}
-            <tr>
-                <td style="border-right: 1px solid #dee2e6">{{ assignment.id }}</td>
-                <td style="border-right: 1px solid #dee2e6">{{ assignment.shift_date|date:"d.m.Y" }}</td>
-                <td style="border-right: 1px solid #dee2e6">
-                    {% if assignment.shift_type == 'night' %}
-                        20:00-08:00
-                    {% elif assignment.shift_type == 'day' %}
-                        08:00-20:00
-                    {% else %}
-                        {{ assignment.get_shift_type_display }}
-                    {% endif %}
-                </td>
-                <td style="border-right: 1px solid #dee2e6">{{ assignment.machine_number }}</td>
-                <td style="border-right: 1px solid #dee2e6">{{ assignment.operator.get_full_name }}</td>
-                <td style="border-right: 1px solid #dee2e6">{{ assignment.planned_quantity }}</td>
-                <td style="border-right: 1px solid #dee2e6">{{ assignment.actual_quantity|default:"-" }}</td>
-                <td style="border-right: 1px solid #dee2e6">{{ assignment.get_status_display }}</td>
-                <td>
-                    <div class="btn-group btn-group-sm" role="group">
-                        <a href="{% url 'shift_assignment:detail' assignment.id %}" class="btn btn-primary">Подробнее</a>
-                        {% if request.user.role == 'master' or request.user.is_superuser %}
-                            <a href="{% url 'shift_assignment:update' assignment.id %}" class="btn btn-warning">Изменить</a>
-                            <a href="{% url 'shift_assignment:delete' assignment.id %}" class="btn btn-danger">Удалить</a>
+    {# Активные задания #}
+    <div class="mb-3 d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+            <h4 class="mb-0 me-3 text-primary">
+                <i class="bi bi-list-task me-2"></i>Активные задания
+            </h4>
+            <span class="badge bg-primary rounded-pill">{{ active_assignments|length }}</span>
+        </div>
+        <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#active-assignments" aria-expanded="true" aria-controls="active-assignments" id="toggleActiveBtn">
+            <i class="bi bi-chevron-up" id="iconActive"></i>
+        </button>
+    </div>
+    <div class="collapse show" id="active-assignments">
+        {% if active_assignments %}
+        <div class="table-responsive mb-4">
+            <table class="table table-striped table-bordered w-100">
+                <tr class="table-primary text-center">
+                    <th>Дата</th>
+                    <th>Смена</th>
+                    <th>Станок</th>
+                    <th>Оператор</th>
+                    <th>Заказчик</th>
+                    <th>Действия</th>
+                </tr>
+                {% for assignment in active_assignments %}
+                <tr class="text-center">
+                    <td>{{ assignment.shift_date|date:"d.m.Y" }}</td>
+                    <td>
+                        {% if assignment.shift_type == 'night' %}
+                            <span class="badge bg-dark">Ночь</span>
+                        {% elif assignment.shift_type == 'day' %}
+                            <span class="badge bg-info text-dark">День</span>
+                        {% else %}
+                            {{ assignment.get_shift_type_display }}
                         {% endif %}
-                    </div>
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="9" class="text-center">Нет заданий</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
+                    </td>
+                    <td>{{ assignment.machine_number|default:"-" }}</td>
+                    <td>{{ assignment.operator.get_full_name }}</td>
+                    <td>{{ assignment.production_plan.customer }}</td>
+                    <td>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <a href="{% url 'shift_assignment:detail' assignment.id %}" class="btn btn-outline-primary" title="Просмотр">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            {% if request.user.role == 'master' or request.user.is_superuser %}
+                                <a href="{% url 'shift_assignment:update' assignment.id %}" class="btn btn-outline-warning" title="Изменить">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{% url 'shift_assignment:delete' assignment.id %}" class="btn btn-outline-danger" title="Удалить">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info mb-4">
+            <i class="bi bi-info-circle me-2"></i>Нет активных заданий
+        </div>
+        {% endif %}
+    </div>
+
+    {# Выполненные задания #}
+    <div class="mb-3 d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+            <h4 class="mb-0 me-3 text-success">
+                <i class="bi bi-check-circle me-2"></i>Выполненные задания
+            </h4>
+            <span class="badge bg-success rounded-pill">{{ completed_assignments_count }}</span>
+        </div>
+        <button class="btn btn-sm btn-outline-success" type="button" data-bs-toggle="collapse" data-bs-target="#completed-assignments" aria-expanded="true" aria-controls="completed-assignments" id="toggleCompletedBtn">
+            <i class="bi bi-chevron-up" id="iconCompleted"></i>
+        </button>
+    </div>
+    <div class="collapse show" id="completed-assignments">
+        {% if completed_assignments %}
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered w-100">
+                <tr class="table-success text-center">
+                    <th>Дата</th>
+                    <th>Смена</th>
+                    <th>Станок</th>
+                    <th>Оператор</th>
+                    <th>Заказчик</th>
+                    <th>Завершено</th>
+                    <th>Действия</th>
+                </tr>
+                {% for assignment in completed_assignments %}
+                <tr class="text-center">
+                    <td>{{ assignment.shift_date|date:"d.m.Y" }}</td>
+                    <td>
+                        {% if assignment.shift_type == 'night' %}
+                            <span class="badge bg-dark">Ночь</span>
+                        {% elif assignment.shift_type == 'day' %}
+                            <span class="badge bg-info text-dark">День</span>
+                        {% else %}
+                            {{ assignment.get_shift_type_display }}
+                        {% endif %}
+                    </td>
+                    <td>{{ assignment.machine_number|default:"-" }}</td>
+                    <td>{{ assignment.operator.get_full_name }}</td>
+                    <td>{{ assignment.production_plan.customer }}</td>
+                    <td>{{ assignment.completed_at|date:"d.m.Y H:i" }}</td>
+                    <td>
+                        <a href="{% url 'shift_assignment:detail' assignment.id %}" class="btn btn-outline-primary btn-sm" title="Просмотр">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle me-2"></i>Нет выполненных заданий
+        </div>
+        {% endif %}
+    </div>
 {% endblock %}
