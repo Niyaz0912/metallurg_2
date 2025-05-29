@@ -14,15 +14,16 @@
     <tr><th>Примечания</th><td>{{ assignment.notes }}</td></tr>
     <tr><th>Статус</th><td>{{ assignment.get_status_display }}</td></tr>
     <tr>
-        <th>Чертеж</th>
-        <td>
-            {% if assignment.drawing %}
-                <a href="{{ assignment.drawing.url }}" target="_blank">Скачать</a>
-            {% else %}
-                Нет
-            {% endif %}
-        </td>
-    </tr>
+    <th>Операционно-технологическая карта</th>
+    <td>
+        {% if assignment.production_plan.techcard %}
+            <a href="{% url 'techcard:detail' assignment.production_plan.techcard.id %}" target="_blank">Открыть техкарту</a>
+        {% else %}
+            Нет
+        {% endif %}
+    </td>
+</tr>
+
 </table>
 
 <a href="{% url 'users:profile' assignment.operator.username %}" class="btn btn-secondary">К списку</a>

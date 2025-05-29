@@ -20,6 +20,7 @@ urlpatterns = [
     path('users/', include('users.urls')),
     path('production_plan/', include('production_plan.urls', namespace='production_plan')),
     path('shifts/', include('shift_assignment.urls', namespace='shift_assignment')),
+    path('techcard/', include('techcard.urls', namespace='techcard')),
 ]
 
 if settings.DEBUG:

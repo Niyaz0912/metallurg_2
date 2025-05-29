@@ -103,3 +103,16 @@ class ExcelUploadForm(forms.Form):
             # if file.size > 5 * 1024 * 1024:
             #     raise forms.ValidationError(_('Размер файла не должен превышать 5 МБ'))
         return file
+
+
+class CompleteAssignmentForm(forms.ModelForm):
+    class Meta:
+        model = ShiftAssignment
+        fields = ['actual_quantity', 'notes']
+        labels = {
+            'actual_quantity': 'Фактическое количество',
+            'notes': 'Комментарии'
+        }
+        widgets = {
+            'actual_quantity': forms.NumberInput(attrs={'min': 0}),
+        }

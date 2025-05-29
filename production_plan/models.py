@@ -39,8 +39,8 @@ class ProductionPlan(models.Model):
     drawing_number = models.CharField(
         max_length=100,
         blank=True,
-        verbose_name=_('Чертеж/Модель'),
-        help_text=_('Номер чертежа или модели изделия')
+        verbose_name='Операционно-технологическая карта',
+        help_text='Номер операционно-технологической карты или модели изделия'
     )
     deadline = models.DateField(
         verbose_name=_('Срок выполнения'),

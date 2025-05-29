@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'users',
     'production_plan',
     'shift_assignment',
+    'techcard',
 ]
 
 MIDDLEWARE = [

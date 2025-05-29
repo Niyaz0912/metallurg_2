@@ -79,7 +79,7 @@ class ShiftAssignment(models.Model):
     )
     drawing = models.FileField(
         upload_to='drawings/%Y/%m/%d/',
-        verbose_name='Чертеж',
+        verbose_name='Операционно-технологическая карта',
         blank=True,
         null=True
     )
@@ -119,6 +119,20 @@ class ShiftAssignment(models.Model):
 
     def __str__(self):
         return f"{self.shift_date} {self.get_shift_type_display()} - Станок #{self.machine_number} ({self.operator})"
+
+    @property
+    def remaining_quantity(self):
+        total = self.production_plan.techcard.total_quantity if hasattr(self.production_plan, 'techcard') else 0
+        # Суммируем фактическое количество по всем выполненным сменам (например, по оператору или по плану)
+        from django.db.models import Sum
+
+        completed_qty = ShiftAssignment.objects.filter(
+            production_plan=self.production_plan,
+            status=ShiftAssignment.Status.COMPLETED
+        ).aggregate(total=Sum('actual_quantity'))['total'] or 0
+
+        remaining = total - completed_qty
+        return max(remaining, 0)
 
     class Meta:
         verbose_name = 'Сменное задание'

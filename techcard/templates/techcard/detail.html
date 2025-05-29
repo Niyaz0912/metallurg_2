@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Операционно-технологическая карта</h2>
+
+    <!-- Основная информация -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5>Общие данные</h5>
+        </div>
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">Заказчик:</dt>
+                <dd class="col-sm-9">{{ techcard.production_plan.customer }}</dd>
+
+                <dt class="col-sm-3">Изделие:</dt>
+                <dd class="col-sm-9">{{ techcard.production_plan.product_name }}</dd>
+
+                <dt class="col-sm-3">Марка стали:</dt>
+                <dd class="col-sm-9">{{ techcard.steel_grade }}</dd>
+
+                <dt class="col-sm-3">План выпуска:</dt>
+                <dd class="col-sm-9">{{ techcard.total_quantity }} шт.</dd>
+
+                <dt class="col-sm-3">Остаток:</dt>
+                <dd class="col-sm-9">
+                    <span class="fw-bold">{{ techcard.remaining_quantity }} шт.</span>
+                    <div class="progress mt-2" style="height: 20px;">
+                        <div class="progress-bar bg-success"
+                             role="progressbar"
+                             style="width: {{ progress_percent }}%">
+                            {{ progress_percent }}%
+                        </div>
+                    </div>
+                </dd>
+            </dl>
+        </div>
+    </div>
+
+    <!-- Чертеж -->
+    {% if techcard.drawing %}
+    <div class="card mb-4">
+        <div class="card-header bg-info text-white">
+            <h5>Чертеж/Схема</h5>
+        </div>
+        <div class="card-body text-center">
+            <a href="{{ techcard.drawing.url }}"
+               class="btn btn-outline-primary mb-3"
+               target="_blank">
+                <i class="bi bi-file-pdf"></i> Открыть в полном размере
+            </a>
+            <embed src="{{ techcard.drawing.url }}" type="application/pdf" width="100%" height="600px" />
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Технологический процесс -->
+    <div class="card mb-4">
+        <div class="card-header bg-warning text-dark">
+            <h5>Технологический маршрут</h5>
+        </div>
+        <div class="card-body">
+            <pre class="tech-process">{{ techcard.technological_process }}</pre>
+        </div>
+    </div>
+</div>
+
+<style>
+.tech-process {
+    white-space: pre-wrap;
+    font-family: monospace;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+</style>
+{% endblock %}
