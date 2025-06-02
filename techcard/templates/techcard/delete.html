@@ -1,0 +1,13 @@
+{% extends 'techcard/base.html' %}
+{% block title %}Удалить техкарту{% endblock %}
+
+{% block content %}
+<h1>Удалить технологическую карту #{{ object.id }}?</h1>
+
+<form method="post">
+    {% csrf_token %}
+    <p>Вы уверены, что хотите удалить эту техкарту?</p>
+    <button type="submit" class="btn btn-danger">Удалить</button>
+    <a href="{% url 'techcard:list' %}" class="btn btn-secondary">Отмена</a>
+</form>
+{% endblock %}

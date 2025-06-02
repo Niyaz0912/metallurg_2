@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% load debug_tags %}
+{% debug %}
+
+{% block title %}Техкарта{% endblock %}
+
+{% block content %}
+<div class="container">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+    {% block techcard_content %}
+    <!-- Контент техкарты будет здесь -->
+    {% endblock %}
+</div>
+{% endblock %}

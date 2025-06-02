@@ -1,6 +1,7 @@
 import logging
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models.functions import Coalesce
 from django.shortcuts import redirect
 from django.views.generic import (
     ListView, CreateView, UpdateView, DeleteView, DetailView
@@ -10,6 +11,7 @@ from django.views.generic.edit import FormView
 from django.urls import reverse_lazy
 import pandas as pd
 from .forms import ExcelUploadForm
+from django.db.models import Sum, Q, Case, When, FloatField, ExpressionWrapper, F
 from .models import ProductionPlan
 from django.http import HttpResponse
 from io import BytesIO
@@ -30,6 +32,29 @@ class ProductionPlanListView(LoginRequiredMixin, ListView):
     model = ProductionPlan
     template_name = 'production_plan/list.html'
     context_object_name = 'object_list'
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset = queryset.annotate(
+            calculated_completed=Coalesce(
+                Sum('shift_assignments__actual_quantity',
+                    filter=Q(shift_assignments__status='completed')),
+                0
+            ),
+            calculated_progress=ExpressionWrapper(
+                F('calculated_completed') * 100.0 / F('quantity'),
+                output_field=FloatField()
+            )
+        ).order_by('-deadline')
+
+        # Добавляем строковое поле с точкой в качестве десятичного разделителя
+        for plan in queryset:
+            if plan.calculated_progress is not None:
+                plan.calculated_progress_str = f"{plan.calculated_progress:.1f}".replace(',', '.')
+            else:
+                plan.calculated_progress_str = "0"
+
+        return queryset
 
 
 class ProductionPlanCreateView(StaffRequiredMixin, CreateView):

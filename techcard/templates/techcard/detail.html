@@ -1,80 +1,146 @@
-{% extends "base.html" %}
+{% extends 'techcard/base.html' %}
+
+{% block title %}Техкарта #{{ techcard.id }}{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
-    <h2 class="mb-4">Операционно-технологическая карта</h2>
+    <h1 class="mb-4">Технологическая карта #{{ techcard.id }}</h1>
 
-    <!-- Основная информация -->
     <div class="card mb-4">
-        <div class="card-header bg-primary text-white">
-            <h5>Общие данные</h5>
-        </div>
         <div class="card-body">
-            <dl class="row">
-                <dt class="col-sm-3">Заказчик:</dt>
-                <dd class="col-sm-9">{{ techcard.production_plan.customer }}</dd>
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Производственный план:</strong> {{ techcard.production_plan.order_name }}</p>
+                    <p><strong>Заказчик:</strong> {{ techcard.production_plan.customer }}</p>
+                    <p><strong>Изделие:</strong> {{ techcard.production_plan.product }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Марка стали:</strong> {{ techcard.steel_grade }}</p>
+                    <p><strong>Чертеж:</strong>
+                        {% if techcard.drawing %}
+                            <a href="{{ techcard.drawing.url }}" target="_blank">Просмотреть</a>
+                        {% else %}
+                            Не загружен
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
 
-                <dt class="col-sm-3">Изделие:</dt>
-                <dd class="col-sm-9">{{ techcard.production_plan.product_name }}</dd>
-
-                <dt class="col-sm-3">Марка стали:</dt>
-                <dd class="col-sm-9">{{ techcard.steel_grade }}</dd>
-
-                <dt class="col-sm-3">План выпуска:</dt>
-                <dd class="col-sm-9">{{ techcard.total_quantity }} шт.</dd>
-
-                <dt class="col-sm-3">Остаток:</dt>
-                <dd class="col-sm-9">
-                    <span class="fw-bold">{{ techcard.remaining_quantity }} шт.</span>
-                    <div class="progress mt-2" style="height: 20px;">
-                        <div class="progress-bar bg-success"
-                             role="progressbar"
-                             style="width: {{ progress_percent }}%">
-                            {{ progress_percent }}%
-                        </div>
+            <!-- Прогресс выполнения -->
+            <div class="progress-container">
+                <div class="progress-header">
+                    <span class="progress-title">Прогресс выполнения</span>
+                    <span class="progress-percent">{{ progress_percent|floatformat:1 }}%</span>
+                </div>
+                <div class="progress-bar-wrapper">
+                    <div class="progress-bar-fill
+                        {% if progress_percent < 30 %}low
+                        {% elif progress_percent < 70 %}medium
+                        {% else %}high{% endif %}"
+                        style="width: {{ progress_percent_str }}%">
+                        {{ progress_percent|floatformat:1 }}%
                     </div>
-                </dd>
-            </dl>
+                </div>
+                <small class="text-muted">
+                    Выполнено: {{ techcard.production_plan.completed_quantity }} из {{ techcard.total_quantity }} шт.
+                </small>
+            </div>
         </div>
     </div>
 
-    <!-- Чертеж -->
-    {% if techcard.drawing %}
     <div class="card mb-4">
-        <div class="card-header bg-info text-white">
-            <h5>Чертеж/Схема</h5>
-        </div>
-        <div class="card-body text-center">
-            <a href="{{ techcard.drawing.url }}"
-               class="btn btn-outline-primary mb-3"
-               target="_blank">
-                <i class="bi bi-file-pdf"></i> Открыть в полном размере
-            </a>
-            <embed src="{{ techcard.drawing.url }}" type="application/pdf" width="100%" height="600px" />
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- Технологический процесс -->
-    <div class="card mb-4">
-        <div class="card-header bg-warning text-dark">
-            <h5>Технологический маршрут</h5>
-        </div>
         <div class="card-body">
-            <pre class="tech-process">{{ techcard.technological_process }}</pre>
+            <h5 class="card-title">Технологический маршрут</h5>
+            <pre>{{ techcard.technological_process }}</pre>
         </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">Этапы производства</h5>
+            {% if techcard.stages.all %}
+                <div class="list-group">
+                    {% for stage in techcard.stages.all %}
+                    <div class="list-group-item">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ stage.order }}. {{ stage.name }}</h6>
+                            <small>{{ stage.operation_time|default:"-" }}</small>
+                        </div>
+                        <p class="mb-1"><strong>Оборудование:</strong> {{ stage.equipment }}</p>
+                        <small class="text-muted">{{ stage.instructions }}</small>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-muted">Этапы не добавлены</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between">
+        <a href="{% url 'techcard:list' %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Назад к списку
+        </a>
+        {% if request.user.is_authenticated %}
+            {% if request.user.is_director or request.user.is_superuser %}
+                <div>
+                    <a href="{% url 'techcard:stage_add' techcard.pk %}" class="btn btn-primary me-2">
+                        <i class="bi bi-plus-circle"></i> Добавить этап
+                    </a>
+                    <a href="{% url 'techcard:update' techcard.pk %}" class="btn btn-warning">
+                        <i class="bi bi-pencil"></i> Редактировать
+                    </a>
+                </div>
+            {% endif %}
+        {% endif %}
     </div>
 </div>
 
+<!-- Стили для прогресс-бара -->
 <style>
-.tech-process {
-    white-space: pre-wrap;
-    font-family: monospace;
-    font-size: 1.1rem;
-    line-height: 1.6;
-    padding: 1rem;
-    background: #f8f9fa;
-    border-radius: 4px;
+.progress-container {
+    margin: 1rem 0;
+    width: 100%;
 }
+
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.3rem;
+}
+
+.progress-title {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.progress-percent {
+    font-weight: bold;
+}
+
+.progress-bar-wrapper {
+    height: 24px;
+    background-color: #f0f2f5;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background-color: #28a745; /* Зеленый по умолчанию */
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 8px;
+    font-size: 12px;
+    font-weight: bold;
+    color: white;
+    transition: width 0.5s ease;
+    width: 0%; /* По умолчанию */
+}
+
+.progress-bar-fill.low { background-color: #dc3545; } /* <30% */
+.progress-bar-fill.medium { background-color: #ffc107; color: #343a40; } /* 30-70% */
+.progress-bar-fill.high { background-color: #28a745; } /* >70% */
 </style>
 {% endblock %}

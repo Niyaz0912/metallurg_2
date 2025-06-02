@@ -113,3 +113,35 @@ document.addEventListener('DOMContentLoaded', function () {
             toggleIcon.classList.add('bi-chevron-down');
         });
     });
+
+function updateProgress() {
+    fetch('/api/production-plans/progress/')
+        .then(response => response.json())
+        .then(data => {
+            data.forEach(plan => {
+                // Обновляем прогресс в карточках планов
+                const planProgress = document.querySelector(`.card[data-plan-id="${plan.id}"] .progress-bar`);
+                if (planProgress) {
+                    planProgress.style.width = `${plan.progress}%`;
+                    planProgress.setAttribute('aria-valuenow', plan.progress);
+                    planProgress.textContent = `${plan.progress}%`;
+                    // Обновляем классы цвета
+                    planProgress.classList.remove('bg-success', 'bg-warning', 'bg-danger');
+                    if (plan.progress < 30) planProgress.classList.add('bg-danger');
+                    else if (plan.progress < 70) planProgress.classList.add('bg-warning');
+                    else planProgress.classList.add('bg-success');
+                }
+
+                // Обновляем прогресс в техкартах (если открыты)
+                const techcardProgress = document.querySelector(`.techcard[data-plan-id="${plan.id}"] .progress-bar`);
+                if (techcardProgress) {
+                    techcardProgress.style.width = `${plan.progress}%`;
+                    techcardProgress.setAttribute('aria-valuenow', plan.progress);
+                }
+            });
+        });
+}
+
+// Обновляем каждые 30 секунд
+setInterval(updateProgress, 30000);
+document.addEventListener('DOMContentLoaded', updateProgress);

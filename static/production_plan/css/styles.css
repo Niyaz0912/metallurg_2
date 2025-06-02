@@ -1,3 +1,6 @@
+/* ==================== */
+/* БАЗОВЫЕ СТИЛИ */
+/* ==================== */
 body {
     font-family: 'Segoe UI', Arial, sans-serif;
     background:
@@ -6,36 +9,38 @@ body {
     background-size: cover;
     min-height: 100vh;
     color: #343a40;
+    margin: 0;
+    padding: 0;
 }
 
-/* Контейнер */
+/* ==================== */
+/* ОСНОВНОЙ КОНТЕЙНЕР */
+/* ==================== */
 .container {
     max-width: 1200px;
-    margin: 0 auto;
-    background-color: rgba(255, 255, 255, 0.50);
+    margin: 2rem auto;
+    background-color: rgba(255, 255, 255, 0.5);
     border-radius: 15px;
     padding: 25px;
     box-shadow: 0 0 25px rgba(0, 0, 0, 0.15);
-    margin-top: 2rem;
-    margin-bottom: 2rem;
     border: 1px solid rgba(0, 0, 0, 0.08);
     backdrop-filter: blur(2px);
 }
 
+/* ==================== */
+/* НАВИГАЦИОННАЯ ПАНЕЛЬ */
+/* ==================== */
 .navbar {
     padding: 1rem;
-    border-radius: 0px;
     margin-bottom: 25px;
-    background-color: #1a365d  !important;
+    background-color: #1a365d !important;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    border: 1px solid #e0e0e0;
 }
 
 .navbar-brand {
     font-size: 1.5rem;
     font-weight: 700;
-    color: #1a5276 !important;
-    letter-spacing: 0.5px;
+    color: white !important;
 }
 
 .navbar .dropdown-menu {
@@ -51,28 +56,27 @@ body {
 
 .navbar .dropdown-item:hover {
     background-color: #f5f5f5;
-    color: #000 !important;
 }
 
-.navbar .text-white {
-    color: #333 !important;
-    text-shadow: none;
-}
-
-/* Заголовки */
+/* ==================== */
+/* ТИПОГРАФИКА */
+/* ==================== */
 h1, h2, h3, h4, h5 {
     color: #2c3e50;
     text-shadow: 1px 1px 3px rgba(0,0,0,0.08);
     font-weight: 600;
     margin-bottom: 20px;
 }
+
 h1 {
     margin-bottom: 30px;
     padding-bottom: 15px;
     border-bottom: 2px solid #2c3e50;
 }
 
-/* Карточки */
+/* ==================== */
+/* КАРТОЧКИ */
+/* ==================== */
 .card {
     margin-bottom: 20px;
     border-radius: 12px;
@@ -96,11 +100,9 @@ h1 {
     font-weight: 500;
 }
 
-.card-text {
-    font-size: 1rem;
-}
-
-/* Кнопки */
+/* ==================== */
+/* КНОПКИ */
+/* ==================== */
 .btn {
     padding: 10px 22px;
     border-radius: 5px;
@@ -109,71 +111,37 @@ h1 {
     border: none;
 }
 
-.btn:hover, .btn:focus {
+.btn:hover {
     transform: translateY(-2px) scale(1.03);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.btn-primary {
-    background-color: #007bff;
-    border-color: #007bff;
-    color: #fff;
+/* Цветные кнопки */
+.btn-primary { background-color: #007bff; color: #fff; }
+.btn-success { background-color: #28a745; color: #fff; }
+.btn-danger { background-color: #dc3545; color: #fff; }
+.btn-info { background-color: #17a2b8; color: #fff; }
+
+/* Контурные кнопки */
+.btn-outline {
+    background-color: transparent;
+    border: 1px solid;
 }
 
-.btn-success {
-    background-color: #28a745;
-    border-color: #28a745;
-    color: #fff;
-}
+.btn-outline-primary { color: #3a7bd5; border-color: #3a7bd5; }
+.btn-outline-primary:hover { background-color: #f0f5ff; }
 
-.btn-danger {
-    background-color: #dc3545;
-    border-color: #dc3545;
-    color: #fff;
-}
+.btn-outline-secondary { color: #6c757d; border-color: #6c757d; }
+.btn-outline-secondary:hover { background-color: #f8f9fa; }
 
-.btn-info {
-    background-color: #17a2b8;
-    border-color: #17a2b8;
-    color: #fff;
-}
+.btn-outline-danger { color: #dc3545; border-color: #dc3545; }
+.btn-outline-danger:hover { background-color: #fff0f0; }
 
-/* Утилиты */
-.text-center {
-    text-align: center;
-}
-
-.mx-3 {
-    margin-left: 1rem;
-    margin-right: 1rem;
-}
-
-.mt-5 {
-    margin-top: 3rem;
-}
-
-.alert {
-    border-radius: 7px;
-    padding: 12px 18px;
-    margin: 15px 0;
-    font-size: 1rem;
-}
-
-/* Футер */
-footer {
-    background-color: #2c3e50;
-    color: white;
-    padding: 15px 0;
-    border-radius: 0 0 10px 10px;
-    margin-top: 30px;
-    text-align: center;
-    box-shadow: 0 -2px 8px rgba(44,62,80,0.08);
-}
-
-/* Таблицы */
+/* ==================== */
+/* ТАБЛИЦЫ */
+/* ==================== */
 .table-responsive {
     overflow-x: auto;
-    max-width: 100%;
 }
 
 .table {
@@ -182,64 +150,167 @@ footer {
     word-wrap: break-word;
 }
 
-/* Узкие колонки */
-.table th:nth-child(1), .table td:nth-child(1) { /* Дата */
-    width: 120px; max-width: 120px; white-space: nowrap;
-}
-.table th:nth-child(2), .table td:nth-child(2) { /* Смена */
-    width: 70px; max-width: 70px; white-space: nowrap;
-}
-.table th:nth-child(3), .table td:nth-child(3) { /* Станок */
-    width: 100px; max-width: 100px; white-space: nowrap;
-}
-/* Для таблицы с завершено */
-.table th:nth-child(6), .table td:nth-child(6) { /* Завершено */
-    width: 140px; max-width: 140px; white-space: nowrap;
-}
-.table th:last-child, .table td:last-child { /* Действия */
-    width: 120px; max-width: 120px; white-space: nowrap;
-}
-
-td, th {
+.table th, .table td {
     white-space: nowrap;
 }
 
-.btn-group-sm .btn {
-    padding: 0.25rem 0.5rem;
+/* Фиксированные ширины колонок */
+.table th:nth-child(1), .table td:nth-child(1) { width: 120px; max-width: 120px; }
+.table th:nth-child(2), .table td:nth-child(2) { width: 70px; max-width: 70px; }
+.table th:nth-child(3), .table td:nth-child(3) { width: 100px; max-width: 100px; }
+.table th:nth-child(6), .table td:nth-child(6) { width: 140px; max-width: 140px; }
+.table th:last-child, .table td:last-child { width: 120px; max-width: 120px; }
+
+/* ==================== */
+/* ПРОГРЕСС БАР (ИСПРАВЛЕННЫЙ) */
+/* ==================== */
+.progress-container {
+    margin: 1rem 0;
+    width: 100%;
 }
 
-/* Адаптивность */
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.3rem;
+}
+
+.progress-title {
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.progress-percent {
+    font-weight: bold;
+}
+
+.progress-bar-wrapper {
+    height: 24px;
+    background-color: #f0f2f5;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background-color: #28a745; /* Зеленый по умолчанию */
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 8px;
+    font-size: 12px;
+    font-weight: bold;
+    color: white;
+    transition: width 0.5s ease;
+    width: 0%; /* Изначально 0, будет меняться через JS */
+}
+
+/* Цвета для разных уровней прогресса */
+.progress-bar-fill.low { background-color: #dc3545; } /* <30% */
+.progress-bar-fill.medium { background-color: #ffc107; color: #343a40; } /* 30-70% */
+.progress-bar-fill.high { background-color: #28a745; } /* >70% */
+
+/* Кастомизация Bootstrap */
+.progress {
+    background-color: #f0f2f5;
+    border-radius: 12px;
+}
+
+.progress-bar {
+    transition: width 0.5s ease;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 8px;
+    font-size: 12px;
+}
+
+/* ==================== */
+/* 3D КНОПКИ */
+/* ==================== */
+.d3-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-3d {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    transition: all 0.3s;
+    cursor: pointer;
+    position: relative;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+}
+
+.btn-3d:hover {
+    transform: translateY(-2px);
+}
+
+.btn-3d:active {
+    transform: translateY(2px);
+    box-shadow: 0 1px 0 rgba(0,0,0,0.2);
+}
+
+.btn-3d-blue { background: #4285f4; }
+.btn-3d-green { background: #34a853; }
+.btn-3d-red { background: #ea4335; }
+
+/* ==================== */
+/* АДАПТИВНОСТЬ */
+/* ==================== */
 @media (max-width: 768px) {
     .container {
         padding: 10px;
+        margin: 1rem auto;
     }
+
     .card-body {
         padding: 12px;
     }
+
     .navbar-brand {
         font-size: 1.1rem;
     }
-    .table-responsive {
-        overflow-x: auto;
-    }
-    .table th, .table td {
-        white-space: nowrap;
-    }
-    /* Узкие колонки на мобильном */
-    .table th:nth-child(1), .table td:nth-child(1) { width: 55px; max-width: 55px;}
-    .table th:nth-child(2), .table td:nth-child(2) { width: 43px; max-width: 43px;}
-    .table th:nth-child(3), .table td:nth-child(3) { width: 42px; max-width: 42px;}
-    .table th:nth-child(6), .table td:nth-child(6) { width: 70px; max-width: 70px;}
-    .table th:last-child, .table td:last-child { width: 56px; max-width: 56px;}
-    /* Скрываем длинные версии, показываем короткие */
-    .d-mobile-none { display: none !important; }
+
+    /* Узкие колонки на мобильных */
+    .table th:nth-child(1), .table td:nth-child(1) { width: 55px; max-width: 55px; }
+    .table th:nth-child(2), .table td:nth-child(2) { width: 43px; max-width: 43px; }
+    .table th:nth-child(3), .table td:nth-child(3) { width: 42px; max-width: 42px; }
+    .table th:nth-child(6), .table td:nth-child(6) { width: 70px; max-width: 70px; }
+    .table th:last-child, .table td:last-child { width: 56px; max-width: 56px; }
+
+    /* Переключение между мобильными и десктопными элементами */
     .d-mobile-inline { display: inline !important; }
+    .d-mobile-none { display: none !important; }
 }
 
-/* По умолчанию показываем длинные версии, короткие скрываем */
+/* По умолчанию (десктоп) */
 .d-mobile-inline { display: none; }
 .d-mobile-none { display: inline; }
 
+/* ==================== */
+/* РАЗНОЕ */
+/* ==================== */
+.alert {
+    border-radius: 7px;
+    padding: 12px 18px;
+    margin: 15px 0;
+    font-size: 1rem;
+}
+
+footer {
+    background-color: #2c3e50;
+    color: white;
+    padding: 15px 0;
+    text-align: center;
+    box-shadow: 0 -2px 8px rgba(44,62,80,0.08);
+}
 
 
 /* Вариант 1 Минималистичный светлый:
