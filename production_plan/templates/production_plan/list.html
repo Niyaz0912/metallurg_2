@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
-{% load static %}
 
 {% block content %}
+
 <div class="container mt-4">
     <h1 class="mb-4">Список производственных планов</h1>
 
@@ -23,38 +23,54 @@
         <div class="col-md-4 mb-4">
             <div class="card h-100">
                 <div class="card-body d-flex flex-column">
-                    <h5 class="card-title">{{ plan.order_name }} ({{ plan.customer }})</h5>
-                    <div class="card-text mb-2">
-                        <p><strong>Изделие:</strong> {{ plan.product }}</p>
-                        <p><strong>Количество:</strong> {{ plan.quantity }} шт.</p>
-                        {% if plan.drawing_number %}
-                            <p><strong>Чертеж/Модель:</strong> {{ plan.drawing_number }}</p>
-                        {% endif %}
-                        <div class="progress mb-2">
-                            <div class="progress-bar" role="progressbar"
-                                 style="width: {{ plan.progress }}%"
-                                 aria-valuenow="{{ plan.progress }}"
+                    <h5 class="card-title">{{ plan.order_name|default:"Без названия" }}</h5>
+                    <p class="card-text"><strong>Заказчик:</strong> {{ plan.customer }}</p>
+                    <p class="card-text"><strong>Изделие:</strong> {{ plan.product }}</p>
+
+                    {% if plan.drawing_number %}
+                        <p class="card-text"><strong>Чертеж:</strong> {{ plan.drawing_number }}</p>
+                    {% endif %}
+
+                    <!-- Прогресс выполнения -->
+                    <div class="mb-3">
+                        <strong>Выполнено:</strong> {{ plan.calculated_progress|floatformat:1 }}%
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar
+                                {% if plan.calculated_progress < 30 %}bg-danger
+                                {% elif plan.calculated_progress < 70 %}bg-warning
+                                {% else %}bg-success{% endif %}"
+                                 role="progressbar"
+                                 style="width: {{ plan.calculated_progress_str }}%"
+                                 aria-valuenow="{{ plan.calculated_progress|floatformat:1 }}"
                                  aria-valuemin="0"
                                  aria-valuemax="100">
-                                {{ plan.progress }}%
+                                {{ plan.calculated_progress|floatformat:1 }}%
                             </div>
                         </div>
-                        <p><strong>Дедлайн:</strong> {{ plan.deadline|date:"d.m.Y" }}</p>
+                        <small class="text-muted">
+                            {{ plan.calculated_completed }} из {{ plan.quantity }} шт.
+                        </small>
                     </div>
-                    {% if user.is_authenticated %}
-                        {% if user.role == 'admin' or user.role == 'director' %}
-                            <div class="mt-auto">
-                                <a href="{% url 'production_plan:detail' plan.pk %}"
-                                   class="btn btn-primary btn-sm">
-                                    Подробнее
-                                </a>
-                                <a href="{% url 'production_plan:update' plan.pk %}"
-                                   class="btn btn-warning btn-sm ms-1">
-                                    Редактировать
-                                </a>
-                            </div>
+
+                    <p class="card-text">
+                        <strong>Срок:</strong> {{ plan.deadline|date:"d.m.Y" }}
+                        {% if plan.is_overdue %}
+                            <span class="badge bg-danger ms-2">Просрочен</span>
                         {% endif %}
-                    {% endif %}
+                    </p>
+
+                    <div class="mt-auto pt-2">
+                        <a href="{% url 'production_plan:detail' plan.pk %}"
+                           class="btn btn-primary btn-sm">
+                            <i class="bi bi-eye"></i> Подробнее
+                        </a>
+                        {% if user.is_authenticated and user.role in 'admin director' %}
+                            <a href="{% url 'production_plan:update' plan.pk %}"
+                               class="btn btn-warning btn-sm ms-1">
+                                <i class="bi bi-pencil"></i> Редактировать
+                            </a>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
@@ -67,15 +83,5 @@
         {% endfor %}
     </div>
 </div>
-{% endblock %}
 
-{% block scripts %}
-<!-- Можно добавить скрипты для динамического обновления прогресса -->
-<script>
-// Пример: автоматическое обновление прогресса каждые 30 секунд
-setInterval(() => {
-    window.location.reload();
-}, 30000);
-</script>
 {% endblock %}
-
