@@ -1,6 +1,7 @@
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Sum, Q
 from django.utils.translation import gettext_lazy as _
 
 
@@ -14,74 +15,58 @@ class DirectorProductionPlan(models.Model):
 
 
 class ProductionPlan(models.Model):
-    customer = models.CharField(
-        max_length=255,
-        verbose_name=_('Заказчик'),
-        help_text=_('Название компании-заказчика')
-    )
+    customer = models.CharField(max_length=255, verbose_name='Заказчик')
     order_name = models.CharField(
         max_length=255,
-        verbose_name=_('Наименование заказа'),
-        help_text=_('Наименование производственного заказа'),
+        verbose_name='Наименование заказа',
         db_index=True,
-        null=True,
-        blank=True,
+        default='Без названия',  # Добавлено значение по умолчанию
+        help_text='Наименование производственного заказа'
     )
-    product = models.CharField(
-        max_length=255,
-        verbose_name=_('Изделие'),
-        help_text=_('Наименование производимого изделия')
-    )
-    quantity = models.PositiveIntegerField(
-        verbose_name=_('Количество'),
-        help_text=_('Общее количество изделий для производства')
-    )
-    drawing_number = models.CharField(
-        max_length=100,
-        blank=True,
-        verbose_name='Операционно-технологическая карта',
-        help_text='Номер операционно-технологической карты или модели изделия'
-    )
-    deadline = models.DateField(
-        verbose_name=_('Срок выполнения'),
-        help_text=_('Планируемая дата завершения производства')
-    )
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name=_('Дата создания')
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name=_('Дата обновления'),
-        db_index=True
-    )
-
-    def __str__(self):
-        return f"{self.order_name} - {self.product} ({self.customer})"
-
-    def clean(self):
-        if self.deadline is None:
-            raise ValidationError(_("Срок выполнения обязателен для заполнения"))
-
-        if self.deadline < timezone.now().date():
-            raise ValidationError(_("Срок выполнения не может быть в прошлом"))
-
-        if self.quantity <= 0:
-            raise ValidationError(_("Количество должно быть положительным числом"))
-
-        if not self.order_name.strip():
-            raise ValidationError(_("Наименование заказа не может быть пустым"))
-
-        if not self.customer.strip():
-            raise ValidationError(_("Заказчик не может быть пустым"))
+    product = models.CharField(max_length=255, verbose_name='Изделие')
+    quantity = models.PositiveIntegerField(verbose_name='Количество')
+    drawing_number = models.CharField(max_length=100, blank=True, verbose_name='Чертеж')
+    deadline = models.DateField(verbose_name='Срок выполнения')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True, db_index=True)
 
     class Meta:
-        verbose_name = _('Производственный план')
-        verbose_name_plural = _('Производственные планы')
+        verbose_name = 'Производственный план'
+        verbose_name_plural = 'Производственные планы'
         ordering = ['-deadline']
         indexes = [
             models.Index(fields=['order_name']),
             models.Index(fields=['customer']),
             models.Index(fields=['deadline']),
         ]
+
+    @property
+    def completed_quantity(self):
+        from shift_assignment.models import ShiftAssignment
+        return self.shift_assignments.filter(
+            status=ShiftAssignment.Status.COMPLETED
+        ).aggregate(total=Sum('actual_quantity'))['total'] or 0
+
+    @property
+    def progress(self):
+        if self.quantity > 0:
+            return round((self.completed_quantity / self.quantity) * 100, 1)
+        return 0
+
+    @property
+    def is_overdue(self):
+        return timezone.now().date() > self.deadline
+
+    def __str__(self):
+        return f"{self.order_name} - {self.product} ({self.customer})"
+
+    def clean(self):
+        if not self.deadline:
+            raise ValidationError("Срок выполнения обязателен для заполнения")
+        if self.deadline < timezone.now().date():
+            raise ValidationError("Срок выполнения не может быть в прошлом")
+        if self.quantity <= 0:
+            raise ValidationError("Количество должно быть положительным числом")
+        if not self.order_name.strip():
+            raise ValidationError("Наименование заказа не может быть пустым")
 
