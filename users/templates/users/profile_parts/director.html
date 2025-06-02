@@ -2,6 +2,13 @@
 <div class="container mt-4">
     <h1>Профиль директора по производству</h1>
 
+    <!-- переход к технологическим картам -->
+    <section class="mb-5">
+        <h2>Технологические карты</h2>
+        <a href="{% url 'techcard:create' %}" class="btn btn-success mb-3">Создать новую техкарту</a>
+        <a href="{% url 'techcard:list' %}" class="btn btn-primary mb-3">Список техкарт</a>
+    </section>
+
     <!-- KPI по участкам -->
     <section class="mb-5">
         <h2>KPI по участкам</h2>
