@@ -190,3 +190,9 @@ LOGGING = {
     },
 }
 
+# Настройки почты
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+DEFAULT_FROM_EMAIL = 'noreply@metallurg.ru'
+IT_SUPPORT_EMAIL = 'it-support@metallurg.ru'  # или список адресов
+
+

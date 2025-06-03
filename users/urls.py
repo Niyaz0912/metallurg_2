@@ -2,6 +2,7 @@ from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
 from .views import CustomLoginView, RegisterView, LegacyProfileRedirectView, OperatorListView
+from .views import request_access
 
 app_name = 'users'
 
@@ -21,6 +22,8 @@ urlpatterns = [
 
     path('shift_schedule/', views.ShiftScheduleView.as_view(), name='shift_schedule'),
     path('operators/', OperatorListView.as_view(), name='operator_list'),
+
+    path('hr-contacts/', views.hr_contacts, name='hr_contacts'),
 ]
 
 

@@ -11,7 +11,6 @@ from django.views.generic import (
 from django.urls import reverse_lazy, reverse
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied
-from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from django.utils import timezone
@@ -20,6 +19,10 @@ from .forms import RegistrationForm, UserUpdateForm
 from .models import User
 from shift_assignment.models import ShiftAssignment
 from production_plan.models import ProductionPlan
+from django.core.mail import send_mail
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.conf import settings
 
 
 class RoleRequiredMixin(UserPassesTestMixin):
@@ -264,3 +267,40 @@ class OperatorListView(ListView):
     def get_queryset(self):
         # Возвращаем только пользователей с ролью 'operator'
         return User.objects.filter(role='operator').order_by('username')
+
+
+def request_access(request):
+    if request.method == 'POST':
+        full_name = request.POST.get('full_name', '').strip()
+        employee_id = request.POST.get('employee_id', '').strip()
+        contact = request.POST.get('contact', '').strip()
+
+        if not all([full_name, employee_id, contact]):
+            messages.error(request, 'Пожалуйста, заполните все поля')
+            return render(request, 'users/request_access.html')
+
+        try:
+            send_mail(
+                subject=f'Запрос доступа от {full_name}',
+                message=(
+                    f'Детали запроса:\n\n'
+                    f'ФИО: {full_name}\n'
+                    f'Табельный номер: {employee_id}\n'
+                    f'Контактные данные: {contact}\n\n'
+                    f'Дата запроса: {timezone.now().strftime("%Y-%m-%d %H:%M")}'
+                ),
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[settings.IT_SUPPORT_EMAIL],
+                fail_silently=False,
+            )
+            messages.success(request, 'Ваш запрос отправлен. С вами свяжутся в ближайшее время.')
+            return redirect('users:login')
+
+        except Exception as e:
+            messages.error(request, f'Ошибка при отправке запроса: {str(e)}')
+            return render(request, 'users/request_access.html')
+
+    return render(request, 'users/request_access.html')
+
+def hr_contacts(request):
+    return render(request, 'users/hr_contacts.html')

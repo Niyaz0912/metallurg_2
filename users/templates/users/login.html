@@ -1,14 +1,80 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <h2 class="text-center">Вход</h2>
-        <form method="post" action="{% url 'users:login' %}">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit" class="btn btn-primary btn-block">Войти</button>
-        </form>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="text-center mb-0 text-white">Добро пожаловать в приложение АО Металлург</h2>
+                </div>
+
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <img src="https://via.placeholder.com/100" alt="Логотип компании" class="mb-3 rounded-circle" style="width: 100px; height: 100px; object-fit: cover;">
+                        <h3 class="text-primary">Вход в систему</h3>
+                        <p class="text-muted">Пожалуйста, введите свои учетные данные</p>
+                    </div>
+
+                    <form method="post" action="{% url 'users:login' %}" class="needs-validation" novalidate>
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label for="id_username" class="form-label">Имя пользователя</label>
+                            <input type="text" name="username" class="form-control form-control-lg" id="id_username" required>
+                            <div class="invalid-feedback">Пожалуйста, введите имя пользователя</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="id_password" class="form-label">Пароль</label>
+                            <input type="password" name="password" class="form-control form-control-lg" id="id_password" required>
+                            <div class="invalid-feedback">Пожалуйста, введите пароль</div>
+                        </div>
+
+                        <div class="d-grid mb-3">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-box-arrow-in-right me-2"></i>Войти
+                            </button>
+                        </div>
+
+                    </form>
+                </div>
+
+                <div class="card-footer bg-light">
+                    <div class="text-center text-muted">
+                        <p class="mb-0">Впервые в системе? <a href="{% url 'users:hr_contacts' %}" class="text-decoration-none">Свяжитесь с HR-отделом</a></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-5">
+                <h4 class="text-center mb-4">Возможности системы</h4>
+                <div class="list-group list-group-flush border-top border-bottom">
+                    <div class="list-group-item py-3 d-flex align-items-center">
+                        <i class="bi bi-calendar-check fs-4 text-primary me-3"></i>
+                        <div>
+                            <h5 class="mb-1">Управление сменами</h5>
+                            <p class="text-muted mb-0 small">Эффективное планирование и контроль рабочих смен</p>
+                        </div>
+                    </div>
+                    <div class="list-group-item py-3 d-flex align-items-center">
+                        <i class="bi bi-clipboard-data fs-4 text-primary me-3"></i>
+                        <div>
+                            <h5 class="mb-1">Отслеживание процессов</h5>
+                            <p class="text-muted mb-0 small">Полная история производственных операций</p>
+                        </div>
+                    </div>
+                    <div class="list-group-item py-3 d-flex align-items-center">
+                        <i class="bi bi-graph-up fs-4 text-primary me-3"></i>
+                        <div>
+                            <h5 class="mb-1">Аналитика</h5>
+                            <p class="text-muted mb-0 small">Наглядные отчеты и статистика производства</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
+
