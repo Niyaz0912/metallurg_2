@@ -50,12 +50,20 @@ body {
 }
 
 .navbar .dropdown-item {
-    color: #333 !important;
+    color: #000 !important; /* Изменено на черный цвет */
     padding: 0.5rem 1.5rem;
 }
 
 .navbar .dropdown-item:hover {
     background-color: #f5f5f5;
+    color: #000 !important; /* Добавлено для consistency */
+}
+
+/* Стили для иконок в dropdown */
+.dropdown-item i {
+    color: #6c757d; /* Серый цвет для иконок */
+    width: 1.25rem;
+    text-align: center;
 }
 
 /* ==================== */
@@ -137,6 +145,17 @@ h1 {
 .btn-outline-danger { color: #dc3545; border-color: #dc3545; }
 .btn-outline-danger:hover { background-color: #fff0f0; }
 
+/* Стили для кнопки пользователя */
+.btn-outline-light {
+    color: white;
+    border-color: white;
+    background-color: transparent;
+}
+
+.btn-outline-light:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
 /* ==================== */
 /* ТАБЛИЦЫ */
 /* ==================== */
@@ -193,7 +212,7 @@ h1 {
 
 .progress-bar-fill {
     height: 100%;
-    background-color: #28a745; /* Зеленый по умолчанию */
+    background-color: #28a745;
     display: flex;
     align-items: center;
     justify-content: flex-end;
@@ -202,13 +221,13 @@ h1 {
     font-weight: bold;
     color: white;
     transition: width 0.5s ease;
-    width: 0%; /* Изначально 0, будет меняться через JS */
+    width: 0%;
 }
 
 /* Цвета для разных уровней прогресса */
-.progress-bar-fill.low { background-color: #dc3545; } /* <30% */
-.progress-bar-fill.medium { background-color: #ffc107; color: #343a40; } /* 30-70% */
-.progress-bar-fill.high { background-color: #28a745; } /* >70% */
+.progress-bar-fill.low { background-color: #dc3545; }
+.progress-bar-fill.medium { background-color: #ffc107; color: #343a40; }
+.progress-bar-fill.high { background-color: #28a745; }
 
 /* Кастомизация Bootstrap */
 .progress {

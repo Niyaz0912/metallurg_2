@@ -73,4 +73,3 @@ class TechCardStageCreateView(DirectorRequiredMixin, CreateView):
 
     def get_success_url(self):
         return reverse_lazy('techcard:detail', kwargs={'pk': self.kwargs['techcard_pk']})
-

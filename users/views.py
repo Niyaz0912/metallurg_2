@@ -302,5 +302,6 @@ def request_access(request):
 
     return render(request, 'users/request_access.html')
 
+
 def hr_contacts(request):
     return render(request, 'users/hr_contacts.html')

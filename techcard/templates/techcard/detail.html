@@ -78,69 +78,25 @@
     </div>
 
     <div class="d-flex justify-content-between">
-        <a href="{% url 'techcard:list' %}" class="btn btn-secondary">
-            <i class="bi bi-arrow-left"></i> Назад к списку
-        </a>
-        {% if request.user.is_authenticated %}
-            {% if request.user.is_director or request.user.is_superuser %}
-                <div>
-                    <a href="{% url 'techcard:stage_add' techcard.pk %}" class="btn btn-primary me-2">
-                        <i class="bi bi-plus-circle"></i> Добавить этап
-                    </a>
-                    <a href="{% url 'techcard:update' techcard.pk %}" class="btn btn-warning">
-                        <i class="bi bi-pencil"></i> Редактировать
-                    </a>
-                </div>
-            {% endif %}
+        {% if request.user.is_director or request.user.is_superuser %}
+            <a href="{% url 'techcard:list' %}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Назад к списку
+            </a>
+        {% else %}
+            <div></div> <!-- Пустой div для выравнивания -->
         {% endif %}
+
+        <div>
+            {% if request.user.is_director or request.user.is_superuser %}
+                <a href="{% url 'techcard:stage_add' techcard.pk %}" class="btn btn-primary me-2">
+                    <i class="bi bi-plus-circle"></i> Добавить этап
+                </a>
+                <a href="{% url 'techcard:update' techcard.pk %}" class="btn btn-warning">
+                    <i class="bi bi-pencil"></i> Редактировать
+                </a>
+            {% endif %}
+        </div>
     </div>
 </div>
-
-<!-- Стили для прогресс-бара -->
-<style>
-.progress-container {
-    margin: 1rem 0;
-    width: 100%;
-}
-
-.progress-header {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 0.3rem;
-}
-
-.progress-title {
-    font-weight: 600;
-    color: #2c3e50;
-}
-
-.progress-percent {
-    font-weight: bold;
-}
-
-.progress-bar-wrapper {
-    height: 24px;
-    background-color: #f0f2f5;
-    border-radius: 12px;
-    overflow: hidden;
-}
-
-.progress-bar-fill {
-    height: 100%;
-    background-color: #28a745; /* Зеленый по умолчанию */
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    padding-right: 8px;
-    font-size: 12px;
-    font-weight: bold;
-    color: white;
-    transition: width 0.5s ease;
-    width: 0%; /* По умолчанию */
-}
-
-.progress-bar-fill.low { background-color: #dc3545; } /* <30% */
-.progress-bar-fill.medium { background-color: #ffc107; color: #343a40; } /* 30-70% */
-.progress-bar-fill.high { background-color: #28a745; } /* >70% */
-</style>
 {% endblock %}
+

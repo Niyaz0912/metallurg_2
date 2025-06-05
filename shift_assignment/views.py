@@ -1,7 +1,6 @@
 import logging
 from datetime import datetime
 from io import BytesIO
-
 import pandas as pd
 from django.contrib import messages
 from django.contrib.auth import get_user_model
@@ -126,10 +125,12 @@ class ShiftAssignmentDetailView(LoginRequiredMixin, DetailView):
 
 
 class ShiftAssignmentDeleteView(LoginRequiredMixin, DeleteView):
-    """Удаление задания"""
     model = ShiftAssignment
     template_name = 'shift_assignment/delete.html'
-    success_url = reverse_lazy('shift_assignment:active')
+
+    def get_success_url(self):
+        # Редирект на профиль авторизованного пользователя
+        return reverse_lazy('users:profile', kwargs={'username': self.request.user.username})
 
     def delete(self, request, *args, **kwargs):
         messages.success(request, "Задание успешно удалено")
@@ -145,14 +146,11 @@ def delete_all_assignments(request):
             active_assignments.delete()
 
             messages.success(request, f'Успешно удалено {count} активных заданий')
-            # Редирект по URL профиля мастера
-            return redirect('/users/profile/master/')
-
         except Exception as e:
             messages.error(request, f'Ошибка при удалении заданий: {str(e)}')
-            return redirect('/users/profile/master/')
 
-    return redirect('/users/profile/master/')
+    # Редирект на профиль авторизованного пользователя
+    return redirect('users:profile', username=request.user.username)
 
 
 class CompleteAssignmentView(LoginRequiredMixin, View):
