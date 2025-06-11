@@ -1,8 +1,9 @@
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Sum, Q
+from django.db.models import Sum
 from django.utils.translation import gettext_lazy as _
+from django.core.validators import MinLengthValidator
 
 
 class DirectorProductionPlan(models.Model):
@@ -15,7 +16,11 @@ class DirectorProductionPlan(models.Model):
 
 
 class ProductionPlan(models.Model):
-    customer = models.CharField(max_length=255, verbose_name='Заказчик')
+    customer = models.CharField(
+        max_length=255,
+        verbose_name='Заказчик',
+        validators=[MinLengthValidator(1)],
+    )
     order_name = models.CharField(
         max_length=255,
         verbose_name='Наименование заказа',
@@ -69,4 +74,5 @@ class ProductionPlan(models.Model):
             raise ValidationError("Количество должно быть положительным числом")
         if not self.order_name.strip():
             raise ValidationError("Наименование заказа не может быть пустым")
-
+        if not self.customer.strip():
+            raise ValidationError("Заказчик не может быть пустым")
