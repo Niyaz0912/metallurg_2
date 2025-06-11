@@ -142,6 +142,29 @@ function updateProgress() {
         });
 }
 
+// Отображение имени выбранного файла
+document.getElementById('id_drawing').addEventListener('change', function(e) {
+    var fileName = e.target.files[0]?.name || 'Выберите файл...';
+    document.querySelector('.custom-file-label').textContent = fileName;
+});
+
+// Валидация формы
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        var forms = document.getElementsByClassName('needs-validation');
+        Array.prototype.filter.call(forms, function(form) {
+            form.addEventListener('submit', function(event) {
+                if (form.checkValidity() === false) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    }, false);
+})();
+
 // Обновляем каждые 30 секунд
 setInterval(updateProgress, 30000);
 document.addEventListener('DOMContentLoaded', updateProgress);
