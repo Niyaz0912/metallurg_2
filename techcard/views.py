@@ -23,6 +23,11 @@ class TechCardCreateView(DirectorRequiredMixin, CreateView):
     template_name = 'techcard/create.html'
     success_url = reverse_lazy('techcard:list')
 
+    def form_valid(self, form):
+        # Автоматически устанавливаем количество из производственного плана
+        form.instance.total_quantity = form.cleaned_data['production_plan'].quantity
+        return super().form_valid(form)
+
 
 class TechCardUpdateView(DirectorRequiredMixin, UpdateView):
     model = TechCard
