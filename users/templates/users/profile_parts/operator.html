@@ -1,3 +1,7 @@
 {% if active_assignments %}
-{% include 'users/assignment_table.html' with assignments=active_assignments %}
+    {% include 'users/assignment_table.html' with assignments=active_assignments %}
+{% else %}
+    <div class="alert alert-info mt-3">
+        Для Вас нет активных сменных заданий.
+    </div>
 {% endif %}
