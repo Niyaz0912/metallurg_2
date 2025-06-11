@@ -185,9 +185,9 @@ class CompleteAssignmentView(LoginRequiredMixin, View):
 
 
 class ShiftAssignmentUploadView(LoginRequiredMixin, View):
-    """Загрузка заданий из Excel"""
+    """Загрузка заданий из Excel с поддержкой общих данных"""
     template_name = 'shift_assignment/upload.html'
-    success_url = '/users/profile/master/'  # <-- меняем на URL профиля мастера
+    success_url = '/users/profile/master/'
 
     column_mapping = {
         'Наименование заказа': 'order_name',
@@ -199,7 +199,14 @@ class ShiftAssignmentUploadView(LoginRequiredMixin, View):
         'Номер станка': 'machine_number',
         'Примечания': 'notes'
     }
-    required_columns = list(column_mapping.keys())
+    required_columns = ['Наименование заказа', 'Заказчик', 'Логин оператора', 'Плановое количество']
+
+    SHIFT_TYPE_MAP = {
+        'день': 'day',
+        'ночь': 'night',
+        'day': 'day',
+        'night': 'night',
+    }
 
     def get(self, request):
         form = ExcelUploadForm()
@@ -221,6 +228,30 @@ class ShiftAssignmentUploadView(LoginRequiredMixin, View):
                 messages.error(request, f"Отсутствуют обязательные колонки: {', '.join(missing_cols)}")
                 return render(request, self.template_name, {'form': form})
 
+            # Автозаполнение даты и типа смены, если они указаны в первой строке
+            common_shift_date = None
+            common_shift_type = None
+
+            if 'Дата смены' in df.columns:
+                common_shift_date = self.parse_date(df['Дата смены'].iloc[0]) if not pd.isna(
+                    df['Дата смены'].iloc[0]) else None
+                df['shift_date'] = common_shift_date
+
+            if 'Тип смены' in df.columns:
+                raw_shift_type = str(df['Тип смены'].iloc[0]).strip().lower() if not pd.isna(
+                    df['Тип смены'].iloc[0]) else None
+                common_shift_type = self.SHIFT_TYPE_MAP.get(raw_shift_type)
+                df['shift_type'] = common_shift_type
+
+            # Проверка что общие данные заполнены
+            if not common_shift_date:
+                messages.error(request, "Дата смены должна быть указана в первой строке")
+                return render(request, self.template_name, {'form': form})
+
+            if not common_shift_type:
+                messages.error(request, "Тип смены должен быть 'день' или 'ночь' (или 'day'/'night')")
+                return render(request, self.template_name, {'form': form})
+
             df = df.rename(columns=self.column_mapping)
             created_count = 0
             errors = []
@@ -228,7 +259,10 @@ class ShiftAssignmentUploadView(LoginRequiredMixin, View):
             for idx, row in df.iterrows():
                 row_num = idx + 2
                 try:
-                    shift_date = self.parse_date(row['shift_date'])
+                    # Пропускаем первую строку если она содержит только общие данные
+                    if idx == 0 and pd.isna(row.get('operator_username')):
+                        continue
+
                     plan = ProductionPlan.objects.get(
                         order_name=row['order_name'],
                         customer=row['customer']
@@ -237,8 +271,8 @@ class ShiftAssignmentUploadView(LoginRequiredMixin, View):
 
                     ShiftAssignment.objects.create(
                         production_plan=plan,
-                        shift_date=shift_date,
-                        shift_type=row['shift_type'],
+                        shift_date=common_shift_date,  # Используем общую дату
+                        shift_type=common_shift_type,  # Используем общий тип смены
                         machine_number=row.get('machine_number', ''),
                         operator=operator,
                         planned_quantity=row['planned_quantity'],
@@ -265,7 +299,7 @@ class ShiftAssignmentUploadView(LoginRequiredMixin, View):
                 if len(errors) > 5:
                     messages.info(request, f"И ещё {len(errors) - 5} ошибок...")
 
-            return redirect(self.success_url)  # <-- используем URL профиля мастера
+            return redirect(self.success_url)
 
         except Exception as e:
             messages.error(request, f"Ошибка при обработке файла: {str(e)}")
@@ -278,7 +312,7 @@ class ShiftAssignmentUploadView(LoginRequiredMixin, View):
             raise ValueError("Дата не может быть пустой")
         if isinstance(date_value, datetime):
             return date_value.date()
-        for fmt in ('%d.%m.%Y', '%Y-%m-%d'):
+        for fmt in ('%d.%m.%Y', '%Y-%m-%d', '%Y-%m-%d %H:%M:%S'):
             try:
                 return datetime.strptime(str(date_value), fmt).date()
             except ValueError:
