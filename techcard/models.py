@@ -25,7 +25,7 @@ class TechCard(models.Model):
         help_text='Оставьте пустым, если марка стали не имеет значения'
     )
     total_quantity = models.PositiveIntegerField(
-        verbose_name='План выпуска (шт)'
+        verbose_name='Количество (шт)'
     )
     technological_process = models.TextField(
         verbose_name='Технологический маршрут',
@@ -36,19 +36,15 @@ class TechCard(models.Model):
 
     @property
     def remaining_quantity(self):
-        completed = self.production_plan.shift_assignments.filter(
-            status=ShiftAssignment.Status.COMPLETED
-        ).aggregate(total=models.Sum('actual_quantity'))['total'] or 0
-        return self.total_quantity - completed
-
-    @property
-    def remaining_quantity(self):
-        return self.total_quantity - self.production_plan.completed_quantity
+        """Оставшееся количество продукции к выпуску."""
+        return max(0, self.total_quantity - self.production_plan.completed_quantity)  # Защита от отрицательных значений
 
     @property
     def progress(self):
-        """Прогресс выполнения (синхронизирован с ProductionPlan)"""
-        return self.production_plan.progress
+        """Прогресс выполнения в процентах (0-100)."""
+        if self.total_quantity == 0:
+            return 0  # Избегаем деления на ноль
+        return min(100, round((self.production_plan.completed_quantity / self.total_quantity) * 100, 1))
 
     def __str__(self):
         return f"Техкарта #{self.id} ({self.production_plan})"
