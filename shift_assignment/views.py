@@ -336,7 +336,7 @@ def download_rus_template(request):
         'ООО "МеталлСтрой"',
         'MS-2023-001',
         '15.05.2025',
-        'day',
+        'день',
         'operator1',
         100,
         'CNC-01',
