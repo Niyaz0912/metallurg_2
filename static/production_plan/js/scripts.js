@@ -166,5 +166,5 @@ document.getElementById('id_drawing').addEventListener('change', function(e) {
 })();
 
 // Обновляем каждые 30 секунд
-setInterval(updateProgress, 30000);
+setInterval(updateProgress, 300000);
 document.addEventListener('DOMContentLoaded', updateProgress);
