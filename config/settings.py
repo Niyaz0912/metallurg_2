@@ -14,7 +14,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'default-secret-key-for-development')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
+ALLOWED_HOSTS = ['192.168.1.180', 'localhost', '127.0.0.1']
 
 # Debug toolbar config (disabled by default)
 DEBUG_TOOLBAR_CONFIG = {
