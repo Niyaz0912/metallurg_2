@@ -3,6 +3,7 @@ from django.views.generic import ListView, CreateView, UpdateView, DeleteView, D
 from .models import TechCard, TechCardStage
 from .forms import TechCardForm, TechCardStageForm
 from django.contrib.auth.mixins import UserPassesTestMixin, LoginRequiredMixin
+from django.db.models import Q
 
 
 # Миксин для ограничения доступа директору
@@ -15,6 +16,28 @@ class TechCardListView(DirectorRequiredMixin, ListView):
     model = TechCard
     template_name = 'techcard/list.html'
     context_object_name = 'techcards'
+    paginate_by = 12
+
+    def get_queryset(self):
+        queryset = super().get_queryset().select_related('production_plan')
+        query = self.request.GET.get('q', '').strip()
+
+        if query:
+            if query.isdigit():
+                queryset = queryset.filter(id=int(query))
+            else:
+                queryset = queryset.filter(
+                    Q(production_plan__order_name__icontains=query) |
+                    Q(production_plan__customer__icontains=query) |
+                    Q(steel_grade__icontains=query)
+                )
+
+        return queryset.order_by('-created_at')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['search_query'] = self.request.GET.get('q', '')
+        return context
 
 
 class TechCardCreateView(DirectorRequiredMixin, CreateView):

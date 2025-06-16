@@ -2,42 +2,154 @@
 {% block title %}Список техкарт{% endblock %}
 
 {% block content %}
-<h1>Список технологических карт</h1>
+<div class="container-fluid">
+    <h1 class="mb-4">Список технологических карт</h1>
 
-<a href="{% url 'techcard:create' %}" class="btn btn-success mb-4">
-    <i class="bi bi-plus-lg"></i> Создать
-</a>
+    <!-- Поисковая строка -->
+    <form method="get" class="mb-4">
+        <div class="input-group">
+            <input type="text" name="q" class="form-control form-control-lg"
+                   placeholder="Поиск по номеру, заказчику или изделию"
+                   value="{{ search_query }}">
+            <button class="btn btn-primary" type="submit">
+                <i class="bi bi-search"></i> Поиск
+            </button>
+            <a href="{% url 'techcard:list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-counterclockwise"></i> Сбросить
+            </a>
+        </div>
+    </form>
 
-{% if techcards %}
-<div class="row">
-    {% for card in techcards %}
-    <div class="col-md-4 col-sm-6 mb-4">
-        <div class="card h-100 shadow-sm">
-            <div class="card-body d-flex flex-column">
-                <h5 class="card-title">Техкарта #{{ card.id }}</h5>
-                <p class="card-text"><strong>Производственный план:</strong> {{ card.production_plan }}</p>
-                <p class="card-text"><strong>Марка стали:</strong> {{ card.steel_grade }}</p>
-                <p class="card-text"><strong>План выпуска:</strong> {{ card.total_quantity }} шт.</p>
-                <p class="card-text"><small class="text-muted">Создана: {{ card.created_at|date:"d.m.Y H:i" }}</small></p>
-                <div class="mt-auto d-flex justify-content-between">
-                    <div class="d3-buttons">
-                        <a href="{% url 'techcard:detail' card.pk %}" class="btn-3d btn-3d-blue" title="Просмотр">
-                            <i class="bi bi-eye"></i>
+    <!-- Кнопка создания и статистика -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <a href="{% url 'techcard:create' %}" class="btn btn-success">
+            <i class="bi bi-plus-lg"></i> Создать новую техкарту
+        </a>
+
+        {% if techcards %}
+        <span class="badge bg-primary rounded-pill">
+            Найдено: {{ techcards.paginator.count }}
+        </span>
+        {% endif %}
+    </div>
+
+    <!-- Результаты поиска -->
+    {% if search_query and not techcards %}
+    <div class="alert alert-warning">
+        По запросу "{{ search_query }}" техкарты не найдены.
+    </div>
+    {% endif %}
+
+    <!-- Список техкарт -->
+    {% if techcards %}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for card in techcards %}
+        <div class="col">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Техкарта #{{ card.id }}</h5>
+                </div>
+                <div class="card-body d-flex flex-column">
+                    <div class="mb-3">
+                        <!-- Добавленные поля -->
+                        <p class="mb-1"><strong>Заказчик:</strong> {{ card.production_plan.customer|default:"-" }}</p>
+                        <p class="mb-1"><strong>Изделие:</strong> {{ card.production_plan.product_name|default:"-" }}</p>
+                        <p class="mb-1"><strong>Заказ:</strong> {{ card.production_plan.order_name|default:"-" }}</p>
+
+                        <p class="mb-1"><strong>Марка стали:</strong> {{ card.steel_grade|default:"-" }}</p>
+                        <p class="mb-1"><strong>План выпуска:</strong> {{ card.total_quantity }} шт.</p>
+                        <p class="mb-0"><strong>Статус:</strong>
+                            <span class="badge bg-{% if card.production_plan.status == 'draft' %}warning{% else %}success{% endif %}">
+                                {{ card.production_plan.get_status_display }}
+                            </span>
+                        </p>
+                    </div>
+
+                    <!-- Прогресс выполнения -->
+                    <div class="mt-auto">
+                        <div class="progress mb-2">
+                            <div class="progress-bar" role="progressbar"
+                                 style="width: {{ card.progress }}%"
+                                 aria-valuenow="{{ card.progress }}"
+                                 aria-valuemin="0"
+                                 aria-valuemax="100">
+                                {{ card.progress }}%
+                            </div>
+                        </div>
+                        <small class="text-muted">
+                            Выполнено: {{ card.production_plan.completed_quantity }} из {{ card.total_quantity }}<br>
+                            Создана: {{ card.created_at|date:"d.m.Y H:i" }}
+                            {% if card.updated_at %}
+                            <br>Изменена: {{ card.updated_at|date:"d.m.Y H:i" }}
+                            {% endif %}
+                        </small>
+                    </div>
+                </div>
+                <div class="card-footer bg-white">
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'techcard:detail' card.pk %}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye"></i> Просмотр
                         </a>
-                        <a href="{% url 'techcard:update' card.pk %}" class="btn-3d btn-3d-green" title="Редактировать">
-                            <i class="bi bi-pencil"></i>
+                        <a href="{% url 'techcard:update' card.pk %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-pencil"></i> Изменить
                         </a>
-                        <a href="{% url 'techcard:delete' card.pk %}" class="btn-3d btn-3d-red" title="Удалить">
-                            <i class="bi bi-trash"></i>
+                        <a href="{% url 'techcard:delete' card.pk %}" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-trash"></i> Удалить
                         </a>
                     </div>
                 </div>
             </div>
         </div>
+        {% endfor %}
     </div>
-    {% endfor %}
+
+    <!-- Пагинация -->
+    {% if is_paginated %}
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1&q={{ search_query }}">Первая</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ search_query }}">
+                    &laquo; Назад
+                </a>
+            </li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <li class="page-item active">
+                <span class="page-link">{{ num }}</span>
+            </li>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ num }}&q={{ search_query }}">{{ num }}</a>
+            </li>
+            {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ search_query }}">
+                    Вперед &raquo;
+                </a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&q={{ search_query }}">
+                    Последняя
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+    {% elif not search_query %}
+    <div class="alert alert-info">
+        Нет созданных техкарт. <a href="{% url 'techcard:create' %}" class="alert-link">Создать первую?</a>
+    </div>
+    {% endif %}
 </div>
-{% else %}
-<p>Техкарты не найдены.</p>
-{% endif %}
 {% endblock %}
