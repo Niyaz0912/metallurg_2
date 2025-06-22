@@ -10,11 +10,15 @@ load_dotenv(dotenv_path=BASE_DIR / '.env')
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('SECRET_KEY')
+if not SECRET_KEY:
+    raise Exception("SECRET_KEY не установлен в переменных окружения!")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False').lower() in ('true', '1', 'yes')
 
-ALLOWED_HOSTS = ['192.168.1.180', 'localhost', '127.0.0.1']
+
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'my_domain.beget.app,/public_html').split(',')
+
 
 # Debug toolbar config (disabled by default)
 DEBUG_TOOLBAR_CONFIG = {
@@ -53,8 +57,14 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
     'config.middleware.AuthRedirectMiddleware',
-    # 'debug_toolbar.middleware.DebugToolbarMiddleware',  # Раскомментируйте при необходимости
 ]
+
+# Настройки безопасности
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+X_FRAME_OPTIONS = 'DENY'
 
 # Crispy Forms settings
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"
@@ -161,20 +171,23 @@ LOGGING = {
             'level': 'INFO',
         },
         'file_errors': {
-            'class': 'logging.FileHandler',
+            'class': 'logging.handlers.RotatingFileHandler',
             'filename': LOGGING_DIR / 'django_error.log',
             'formatter': 'verbose',
             'level': 'ERROR',
+            'maxBytes': 5 * 1024 * 1024,  # 5 МБ на файл
+            'backupCount': 5,             # хранить 5 архивных файлов
             'encoding': 'utf-8',
         },
         'file_assignments': {
-            'class': 'logging.FileHandler',
+            'class': 'logging.handlers.RotatingFileHandler',
             'filename': LOGGING_DIR / 'assignments.log',
             'formatter': 'verbose',
             'level': 'INFO',
+            'maxBytes': 5 * 1024 * 1024,  # 5 МБ на файл
+            'backupCount': 5,             # хранить 5 архивных файлов
             'encoding': 'utf-8',
         },
-
     },
     'loggers': {
         'django.request': {
