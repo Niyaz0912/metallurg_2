@@ -1,0 +1,517 @@
+[
+    {
+        "model": "sessions.session",
+        "pk": "1d5on54ofuan8lpk64wq6yd2dtmgqpk7",
+        "fields": {
+            "session_data": ".eJxVjDsOwyAQRO9CHSEwWQwp0-cMaJdPcBKBZOwqyt1tJBdON5r3Zr7M4bpkt7Y4uymwG1Pscu4I_TuWDsILy7NyX8syT8S7wg_a-KOG-Lkf7t9Bxpb7WkYBKlmCJCWSAgrGWiNHIhiEThABNKDYAWhxTYPYgwSjwqjBE7HfBtVHNzw:1uGtEx:EoiIM6ITBg93k0SuffY_Jp_cljB8HJU-Wxzt7w2KXJg",
+            "expire_date": "2025-06-02T05:40:43.797Z"
+        }
+    },
+    {
+        "model": "sessions.session",
+        "pk": "6pmxk2igwg85lfe8qzjnqbm94jvcbtqp",
+        "fields": {
+            "session_data": ".eJxVjDsOwyAQRO9CHSEwWQwp0-cMaJdPcBKBZOwqyt1tJBdON5r3Zr7M4bpkt7Y4uymwG1Pscu4I_TuWDsILy7NyX8syT8S7wg_a-KOG-Lkf7t9Bxpb7WkYBKlmCJCWSAgrGWiNHIhiEThABNKDYAWhxTYPYgwSjwqjBE7HfBtVHNzw:1uPPRT:903oGu-baI59_aUlwNkn82v8g1uITQ0OM3SOEz2Mjyc",
+            "expire_date": "2025-06-25T17:40:51.043Z"
+        }
+    },
+    {
+        "model": "sessions.session",
+        "pk": "8qikfu78xp6cae877im7ea04ktka9f6l",
+        "fields": {
+            "session_data": ".eJxVjDsOwyAQRO9CHSEwWQwp0-cMaJdPcBKBZOwqyt1tJBdON5r3Zr7M4bpkt7Y4uymwG1Pscu4I_TuWDsILy7NyX8syT8S7wg_a-KOG-Lkf7t9Bxpb7WkYBKlmCJCWSAgrGWiNHIhiEThABNKDYAWhxTYPYgwSjwqjBE7HfBtVHNzw:1uQ8mu:c62ASwSPmm5EuemkoFGTwNlQu2XF8Q02-t442BAkfjQ",
+            "expire_date": "2025-06-27T18:06:00.335Z"
+        }
+    },
+    {
+        "model": "sessions.session",
+        "pk": "edb3wiu838nh3h8but8qvof1zopn63rk",
+        "fields": {
+            "session_data": ".eJxVjDsOwyAQRO9CHSEwWQwp0-cMaJdPcBKBZOwqyt1tJBdON5r3Zr7M4bpkt7Y4uymwG1Pscu4I_TuWDsILy7NyX8syT8S7wg_a-KOG-Lkf7t9Bxpb7WkYBKlmCJCWSAgrGWiNHIhiEThABNKDYAWhxTYPYgwSjwqjBE7HfBtVHNzw:1uMsNm:pjS21iLT_9y6JUuJkcnx2esOEuFAxydyO7iYe7v5xAg",
+            "expire_date": "2025-06-18T17:58:34.594Z"
+        }
+    },
+    {
+        "model": "sessions.session",
+        "pk": "f5873iilpwizij19koi9e8c5jjl38ntd",
+        "fields": {
+            "session_data": ".eJxVjDsOwyAQRO9CHSEwWQwp0-cMaJdPcBKBZOwqyt1tJBdON5r3Zr7M4bpkt7Y4uymwG1Pscu4I_TuWDsILy7NyX8syT8S7wg_a-KOG-Lkf7t9Bxpb7WkYBKlmCJCWSAgrGWiNHIhiEThABNKDYAWhxTYPYgwSjwqjBE7HfBtVHNzw:1uNDe9:6YS9045TkwP1Z_W1XvT9KJi9GbRDlamySmo_Ait3lPY",
+            "expire_date": "2025-06-19T16:40:53.482Z"
+        }
+    },
+    {
+        "model": "sessions.session",
+        "pk": "ksnqaf83kgdzvg9ap1qjgymqmfqo6b72",
+        "fields": {
+            "session_data": ".eJxVjDsOwyAQRO9CHSEwWQwp0-cMaJdPcBKBZOwqyt1tJBdON5r3Zr7M4bpkt7Y4uymwG1Pscu4I_TuWDsILy7NyX8syT8S7wg_a-KOG-Lkf7t9Bxpb7WkYBKlmCJCWSAgrGWiNHIhiEThABNKDYAWhxTYPYgwSjwqjBE7HfBtVHNzw:1uFIQe:pO5Oo-e1CJiP_HOc96mZKSIYUUCJNK6d68U1mCciUoM",
+            "expire_date": "2025-05-28T20:10:12.001Z"
+        }
+    },
+    {
+        "model": "sessions.session",
+        "pk": "lo4j93zb1e7ihvdp0usmioba023ntysh",
+        "fields": {
+            "session_data": ".eJxVjDsOwyAQRO9CHSEwWQwp0-cMaJdPcBKBZOwqyt1tJBdON5r3Zr7M4bpkt7Y4uymwG1Pscu4I_TuWDsILy7NyX8syT8S7wg_a-KOG-Lkf7t9Bxpb7WkYBKlmCJCWSAgrGWiNHIhiEThABNKDYAWhxTYPYgwSjwqjBE7HfBtVHNzw:1uFIXL:1KNfYhx9n-GPScPtbxnpwflKL7Pis9s75NO4hghG-ms",
+            "expire_date": "2025-05-28T20:17:07.680Z"
+        }
+    },
+    {
+        "model": "sessions.session",
+        "pk": "qr4cljxk255cn0g1imfj0kulj4dys301",
+        "fields": {
+            "session_data": ".eJxVjDsOAiEUAO9CbQh_Hpb2ewbC5yGrBpJltzLe3ZBsoe3MZN7Eh2Ov_hi4-TWTKxHk8stiSE9sU-RHaPdOU2_7tkY6E3raQZee8XU7279BDaPOrQKpmMqArgAXgiEAlsQFah5ZNlonBy4YKXnBFCJqC0oXZksWxjIkny_JOzeE:1uP3DH:Lm-ZvHoibKVhpV8-JXLgjjNRXgXnHdp0lTAa5INb9pw",
+            "expire_date": "2025-06-24T17:56:43.475Z"
+        }
+    },
+    {
+        "model": "sessions.session",
+        "pk": "r00f3njn515qyjiy3nv90jte80v751vj",
+        "fields": {
+            "session_data": ".eJxVjDsOwyAQRO9CHSEwWQwp0-cMaJdPcBKBZOwqyt1tJBdON5r3Zr7M4bpkt7Y4uymwG1Pscu4I_TuWDsILy7NyX8syT8S7wg_a-KOG-Lkf7t9Bxpb7WkYBKlmCJCWSAgrGWiNHIhiEThABNKDYAWhxTYPYgwSjwqjBE7HfBtVHNzw:1uMrwe:76Vr1P7cWUEq9NdKAhAj1kBiIVtfOPutgSN6VIiFUAc",
+            "expire_date": "2025-06-18T17:30:32.442Z"
+        }
+    },
+    {
+        "model": "sessions.session",
+        "pk": "ssipg046a7puxhhhcx2jxbcqosegpwa8",
+        "fields": {
+            "session_data": ".eJxVjDsOwyAQRO9CHSEwWQwp0-cMaJdPcBKBZOwqyt1tJBdON5r3Zr7M4bpkt7Y4uymwG1Pscu4I_TuWDsILy7NyX8syT8S7wg_a-KOG-Lkf7t9Bxpb7WkYBKlmCJCWSAgrGWiNHIhiEThABNKDYAWhxTYPYgwSjwqjBE7HfBtVHNzw:1uPPS7:pNyP4DIKHNpG_jSaFdH8xo_q8EAsbzanTlgCJEgmfbw",
+            "expire_date": "2025-06-25T17:41:31.176Z"
+        }
+    },
+    {
+        "model": "sessions.session",
+        "pk": "uyxmno60cy3n908pz9646e1sy4zvqe49",
+        "fields": {
+            "session_data": ".eJxVjDsOAiEUAO9CbQh_Hpb2ewbC5yGrBpJltzLe3ZBsoe3MZN7Eh2Ov_hi4-TWTKxHk8stiSE9sU-RHaPdOU2_7tkY6E3raQZee8XU7279BDaPOrQKpmMqArgAXgiEAlsQFah5ZNlonBy4YKXnBFCJqC0oXZksWxjIkny_JOzeE:1uR1kg:XFf-mC_1LnvM4NK2Te_pDxqwMKI9YkA7nA3ouo_O7AA",
+            "expire_date": "2025-06-30T04:47:22.633Z"
+        }
+    },
+    {
+        "model": "sessions.session",
+        "pk": "vch29c0n9ohdah56f74pz8itpq74d0ce",
+        "fields": {
+            "session_data": ".eJxVjDsOwyAQRO9CHSEwWQwp0-cMaJdPcBKBZOwqyt1tJBdON5r3Zr7M4bpkt7Y4uymwG1Pscu4I_TuWDsILy7NyX8syT8S7wg_a-KOG-Lkf7t9Bxpb7WkYBKlmCJCWSAgrGWiNHIhiEThABNKDYAWhxTYPYgwSjwqjBE7HfBtVHNzw:1uL5Dg:iJYdGEjpY_xY9jfPtdIH7Fft_2WDWjbI4xlvwL3Al58",
+            "expire_date": "2025-06-13T19:16:44.100Z"
+        }
+    },
+    {
+        "model": "sessions.session",
+        "pk": "xln6cdp9okyi2dlznib2dc7xgaegrmlo",
+        "fields": {
+            "session_data": ".eJxVjDsOwyAQRO9CHSEwWQwp0-cMaJdPcBKBZOwqyt1tJBdON5r3Zr7M4bpkt7Y4uymwG1Pscu4I_TuWDsILy7NyX8syT8S7wg_a-KOG-Lkf7t9Bxpb7WkYBKlmCJCWSAgrGWiNHIhiEThABNKDYAWhxTYPYgwSjwqjBE7HfBtVHNzw:1uDop5:J4zLmXQP9QfegjLCDyDDTsjujwl3KEgCMj_I6XmVMGo",
+            "expire_date": "2025-05-24T18:21:19.082Z"
+        }
+    },
+    {
+        "model": "users.user",
+        "pk": 1,
+        "fields": {
+            "password": "pbkdf2_sha256$1000000$5XVUbytWs6XCKv5SPuUaRd$l3cU3F2hXx+937tvMNUE0nt14IOTVIsqit0pqYfqGQY=",
+            "last_login": "2025-06-10T17:53:12.702Z",
+            "is_superuser": true,
+            "first_name": "Администратор",
+            "last_name": "Системный",
+            "email": "admin@company.com",
+            "is_staff": true,
+            "is_active": true,
+            "date_joined": "2025-05-10T13:35:13.758Z",
+            "username": "admin",
+            "role": "admin",
+            "phone": null,
+            "master": null,
+            "groups": [],
+            "user_permissions": []
+        }
+    },
+    {
+        "model": "users.user",
+        "pk": 2,
+        "fields": {
+            "password": "pbkdf2_sha256$1000000$2ixvSl46FUyWBobSfHs217$KZT+1qRmIG8ViwFBjErHglMWjdbNH57nWeKpRdeA7mA=",
+            "last_login": "2025-06-16T04:47:22.619Z",
+            "is_superuser": false,
+            "first_name": "Директор",
+            "last_name": "Производственный",
+            "email": "director@company.com",
+            "is_staff": true,
+            "is_active": true,
+            "date_joined": "2025-05-10T13:35:14.297Z",
+            "username": "director",
+            "role": "director",
+            "phone": "",
+            "master": null,
+            "groups": [],
+            "user_permissions": []
+        }
+    },
+    {
+        "model": "users.user",
+        "pk": 3,
+        "fields": {
+            "password": "pbkdf2_sha256$1000000$O9z5Cnj7QfvXRGwfgR4ez4$68RK9QH6HlJFn5pnpg/Z7KX9WJZQrqzOgFkhA0QZy9g=",
+            "last_login": "2025-06-13T18:06:00.335Z",
+            "is_superuser": false,
+            "first_name": "Мастер",
+            "last_name": "Мех. обработки",
+            "email": "master@company.com",
+            "is_staff": true,
+            "is_active": true,
+            "date_joined": "2025-05-10T13:35:14.787Z",
+            "username": "master",
+            "role": "master",
+            "phone": "",
+            "master": null,
+            "groups": [],
+            "user_permissions": []
+        }
+    },
+    {
+        "model": "users.user",
+        "pk": 4,
+        "fields": {
+            "password": "pbkdf2_sha256$1000000$PWJFolrWPGxUFkx1bKLWlI$38ZFeoOt+ajXYS3/xNMCn/osEHjrJ+lzloGnT0hNaUQ=",
+            "last_login": null,
+            "is_superuser": false,
+            "first_name": "Оператор",
+            "last_name": "Сменный",
+            "email": "operator@company.com",
+            "is_staff": false,
+            "is_active": true,
+            "date_joined": "2025-05-10T13:35:15.281Z",
+            "username": "operator",
+            "role": "operator",
+            "phone": null,
+            "master": null,
+            "groups": [],
+            "user_permissions": []
+        }
+    },
+    {
+        "model": "users.user",
+        "pk": 5,
+        "fields": {
+            "password": "pbkdf2_sha256$1000000$gvgokVIryLS9NR2wE3eFds$I3L47203iH2gi83KBuvkFWcWbK1RN4G8ef4J5KLfXMs=",
+            "last_login": null,
+            "is_superuser": false,
+            "first_name": "Сотрудник",
+            "last_name": "Обычный",
+            "email": "employee@company.com",
+            "is_staff": false,
+            "is_active": true,
+            "date_joined": "2025-05-10T13:35:15.776Z",
+            "username": "employee",
+            "role": "operator",
+            "phone": null,
+            "master": null,
+            "groups": [],
+            "user_permissions": []
+        }
+    },
+    {
+        "model": "users.user",
+        "pk": 6,
+        "fields": {
+            "password": "pbkdf2_sha256$1000000$kOJNzZ8LdYXHL8UUGGy64N$7wuLBp5youNH0PWNrmAjH3LfD3F+oyPhvnYcqafvNsE=",
+            "last_login": "2025-06-05T05:41:41.335Z",
+            "is_superuser": false,
+            "first_name": "Нияз",
+            "last_name": "Хасанов",
+            "email": "",
+            "is_staff": false,
+            "is_active": true,
+            "date_joined": "2025-05-13T15:38:27.080Z",
+            "username": "Khasanov.N",
+            "role": "operator",
+            "phone": "+79517905129",
+            "master": null,
+            "groups": [],
+            "user_permissions": []
+        }
+    },
+    {
+        "model": "users.user",
+        "pk": 7,
+        "fields": {
+            "password": "pbkdf2_sha256$1000000$MLQPsc4eeZsXHgNgau0Zd1$/zq/3KToxVOOIpfcGklIMW/BLo9Ss9prkm6+E29eKCo=",
+            "last_login": "2025-06-03T12:34:27.775Z",
+            "is_superuser": false,
+            "first_name": "Салават",
+            "last_name": "Галиуллин",
+            "email": "",
+            "is_staff": false,
+            "is_active": true,
+            "date_joined": "2025-05-13T19:37:43.648Z",
+            "username": "Galiullin.S",
+            "role": "operator",
+            "phone": "",
+            "master": null,
+            "groups": [],
+            "user_permissions": []
+        }
+    },
+    {
+        "model": "users.user",
+        "pk": 8,
+        "fields": {
+            "password": "pbkdf2_sha256$1000000$BwKcvlZenYE3gtj4CsuL4V$Os5rQBG84B7Q8oU4QJq8oaP8SzkiVZSMG3U6I9iLKEo=",
+            "last_login": "2025-06-11T15:18:03.830Z",
+            "is_superuser": false,
+            "first_name": "Радмир",
+            "last_name": "Ахметшин",
+            "email": "",
+            "is_staff": false,
+            "is_active": true,
+            "date_joined": "2025-05-13T19:45:45.407Z",
+            "username": "Ahmetshin.R",
+            "role": "operator",
+            "phone": "",
+            "master": null,
+            "groups": [],
+            "user_permissions": []
+        }
+    },
+    {
+        "model": "users.user",
+        "pk": 9,
+        "fields": {
+            "password": "pbkdf2_sha256$1000000$lzpYhzfcxcR90Xolo5KoAG$VOQTlyxWEftfFT8xNHSwq4n83VU6JryzqaI8gYsdob0=",
+            "last_login": "2025-06-05T05:44:08.494Z",
+            "is_superuser": false,
+            "first_name": "Богдан",
+            "last_name": "Евдокимов",
+            "email": "",
+            "is_staff": false,
+            "is_active": true,
+            "date_joined": "2025-05-13T19:46:34.349Z",
+            "username": "Evdokimov.B",
+            "role": "operator",
+            "phone": "",
+            "master": null,
+            "groups": [],
+            "user_permissions": []
+        }
+    },
+    {
+        "model": "users.user",
+        "pk": 10,
+        "fields": {
+            "password": "pbkdf2_sha256$1000000$aZ0WUPgtiuhTcewHXnLzK7$S0x7RItfodyYdB0f9nokBS1YC+9IOMLJE0AuFeazKNU=",
+            "last_login": "2025-05-14T16:30:22.528Z",
+            "is_superuser": false,
+            "first_name": "Данил",
+            "last_name": "Куницин",
+            "email": "",
+            "is_staff": false,
+            "is_active": true,
+            "date_joined": "2025-05-13T19:47:36.372Z",
+            "username": "Kunitsin.D",
+            "role": "operator",
+            "phone": "",
+            "master": null,
+            "groups": [],
+            "user_permissions": []
+        }
+    },
+    {
+        "model": "users.user",
+        "pk": 11,
+        "fields": {
+            "password": "pbkdf2_sha256$1000000$Y0DVvEyUi5UdmOLnaZCWL6$7uphFQYXbDX2ylfESWVkM0QS56yJ2x3YzVyQqJLqBrw=",
+            "last_login": "2025-05-14T16:31:10.714Z",
+            "is_superuser": false,
+            "first_name": "Олег",
+            "last_name": "Латыпов",
+            "email": "",
+            "is_staff": false,
+            "is_active": true,
+            "date_joined": "2025-05-13T19:48:55.750Z",
+            "username": "Latypov.O",
+            "role": "operator",
+            "phone": "",
+            "master": null,
+            "groups": [],
+            "user_permissions": []
+        }
+    },
+    {
+        "model": "users.user",
+        "pk": 12,
+        "fields": {
+            "password": "pbkdf2_sha256$1000000$H5IiQFshol3An5E29TR8nl$Kb/m2eN+DOivYTeXNMz63KiUD7Vt8+h4y98WBF0bgyc=",
+            "last_login": "2025-06-03T12:31:40.337Z",
+            "is_superuser": false,
+            "first_name": "Роман",
+            "last_name": "Хлестов",
+            "email": "",
+            "is_staff": false,
+            "is_active": true,
+            "date_joined": "2025-05-13T19:50:03.372Z",
+            "username": "Khlestov.R",
+            "role": "operator",
+            "phone": "",
+            "master": null,
+            "groups": [],
+            "user_permissions": []
+        }
+    },
+    {
+        "model": "users.user",
+        "pk": 13,
+        "fields": {
+            "password": "pbkdf2_sha256$1000000$3t8ecglZ8bdexWSH5DGMMJ$+Wou0sSIEcHw4exvw0zxr/mX6QE66iClhVkYkciLHzs=",
+            "last_login": "2025-05-29T16:36:35.979Z",
+            "is_superuser": false,
+            "first_name": "Эдуард",
+            "last_name": "Самарин",
+            "email": "",
+            "is_staff": false,
+            "is_active": true,
+            "date_joined": "2025-05-13T19:50:58.939Z",
+            "username": "Samarin.E",
+            "role": "operator",
+            "phone": "",
+            "master": null,
+            "groups": [],
+            "user_permissions": []
+        }
+    },
+    {
+        "model": "users.user",
+        "pk": 14,
+        "fields": {
+            "password": "pbkdf2_sha256$1000000$4jYXoh7uY8fOrrh41a3ngv$FW+AgOPyiRv0qoVsfX2CPhRNmJBaQRczcviSS4oRXOU=",
+            "last_login": "2025-05-14T16:32:17.664Z",
+            "is_superuser": false,
+            "first_name": "Виктор",
+            "last_name": "Ошкин",
+            "email": "",
+            "is_staff": false,
+            "is_active": true,
+            "date_joined": "2025-05-13T19:53:11.210Z",
+            "username": "Oshkin.V",
+            "role": "operator",
+            "phone": "",
+            "master": null,
+            "groups": [],
+            "user_permissions": []
+        }
+    },
+    {
+        "model": "users.user",
+        "pk": 15,
+        "fields": {
+            "password": "pbkdf2_sha256$1000000$ny0E9D8puBsE4YNyVEKC1U$SlVe1RPCXLedWKvRKBCiK9NJ3xtJA3dEFtNzfBNO9M0=",
+            "last_login": "2025-05-14T16:33:47.732Z",
+            "is_superuser": false,
+            "first_name": "Вячеслав",
+            "last_name": "Патлажан",
+            "email": "",
+            "is_staff": false,
+            "is_active": true,
+            "date_joined": "2025-05-13T19:57:11.273Z",
+            "username": "Patlazhan.V",
+            "role": "operator",
+            "phone": "",
+            "master": null,
+            "groups": [],
+            "user_permissions": []
+        }
+    },
+    {
+        "model": "production_plan.productionplan",
+        "pk": 7,
+        "fields": {
+            "customer": "ООО \"МеталлСтрой\"",
+            "order_name": "MS-2023-001",
+            "product": "Сталь 20",
+            "quantity": 500,
+            "drawing_number": "Чертёж-123",
+            "deadline": "2025-06-12",
+            "created_at": "2025-05-13T20:21:15.882Z",
+            "updated_at": "2025-06-02T16:16:43.107Z"
+        }
+    },
+    {
+        "model": "production_plan.productionplan",
+        "pk": 8,
+        "fields": {
+            "customer": "АО \"ПромТех\"",
+            "order_name": "PT-2024-005",
+            "product": "Алюминий 6061",
+            "quantity": 300,
+            "drawing_number": "Чертёж-456",
+            "deadline": "2025-06-15",
+            "created_at": "2025-05-13T20:21:15.882Z",
+            "updated_at": "2025-05-13T20:21:15.882Z"
+        }
+    },
+    {
+        "model": "production_plan.productionplan",
+        "pk": 9,
+        "fields": {
+            "customer": "ООО \"СибМеталл\"",
+            "order_name": "SM-2025-011",
+            "product": "Латунь Л63",
+            "quantity": 150,
+            "drawing_number": "Чертёж-789",
+            "deadline": "2025-06-20",
+            "created_at": "2025-05-13T20:21:15.882Z",
+            "updated_at": "2025-05-13T20:21:15.882Z"
+        }
+    },
+    {
+        "model": "production_plan.productionplan",
+        "pk": 10,
+        "fields": {
+            "customer": "ЗАО \"УралСталь\"",
+            "order_name": "US-2025-007",
+            "product": "Нержавейка 08Х18Н10",
+            "quantity": 1000,
+            "drawing_number": "Чертёж-321",
+            "deadline": "2025-07-05",
+            "created_at": "2025-05-13T20:21:15.898Z",
+            "updated_at": "2025-05-13T20:21:15.898Z"
+        }
+    },
+    {
+        "model": "production_plan.productionplan",
+        "pk": 11,
+        "fields": {
+            "customer": "АО Агидель",
+            "order_name": "ЦК 241",
+            "product": "цепь конвеера",
+            "quantity": 500,
+            "drawing_number": "ссылка на чертеж",
+            "deadline": "2025-06-27",
+            "created_at": "2025-06-10T17:54:28.031Z",
+            "updated_at": "2025-06-10T17:56:04.142Z"
+        }
+    },
+    {
+        "model": "techcard.techcard",
+        "pk": 2,
+        "fields": {
+            "production_plan": 10,
+            "drawing": "",
+            "steel_grade": "18ХГТ",
+            "total_quantity": 1000,
+            "technological_process": "Наименование заказчика: ООО «ГРК «Быстринское»\r\nОперационная технологическая карта №\r\nНаименование заказа: секция цепи кратцер-крана\r\nНаименование изделия / операции: Втулка 1 до термообработки\r\nМеханическая обработка\r\nМаршрут / операция:\r\n    Входной контроль заготовки: Круг В1-48 ГОСТ 2590-2006 / 18ХГТ-ЗГП ГОСТ 4543-71; закупка, сообщение 54 м.\r\n    Отрезная: установить и закрепить заготовку; отрезать в размер L=64(-1) мм; заготовка на 1 деталь, всего 828 заготовок.\r\nКоличество, шт: 828\r\nНа чертеже: МГ 326001.01.003\r\nОстаток сдать на склад.\r\nОКК: контроль длины заготовок согласно чертежу, технологии и инструктивному письму №10/47 от 19.03.2018.\r\nКонтровер\r\n    Токарная: установить заготовку, выверить и закрепить на токарном станке оператором.\r\n    Подрезать торец начисто, шероховатость Раб 3;\r\n    Точить предварительно под ТО №44 (+0,35/+0,45) мм до кулачков;\r\n4.1. Переустановить, выверить и так далее деталь.\r\n    Сверлить, расточить Ø31 (+0,1/+0,05) мм с фаской 0,5×45°, шероховатость Ра 3,2;\r\n    Точить предварительно под ТО №41 (+0,35/+0,45) мм в размер 12,5 (10,1) мм RE (пре);\r\n    Подрезать второй торец в размер 60 (+0,1) мм, шероховатость Каб 3;\r\n    Доточить предварительно под ТО №44 (+0,35/+0,45) мм;\r\n    Точить предварительно под ТО №41 (+0,35/+0,45) мм, выдержать размер 35 (10,1) мм;\r\n    Править 2,4;\r\n    Расточить фаску 0,5×45°.",
+            "created_at": "2025-05-30T18:33:25.698Z",
+            "updated_at": "2025-06-02T19:24:04.628Z"
+        }
+    },
+    {
+        "model": "techcard.techcard",
+        "pk": 3,
+        "fields": {
+            "production_plan": 9,
+            "drawing": "",
+            "steel_grade": "",
+            "total_quantity": 400,
+            "technological_process": "Зесь будут указаны моршруты и операции для детали",
+            "created_at": "2025-05-30T19:14:37.793Z",
+            "updated_at": "2025-05-30T19:14:37.793Z"
+        }
+    }
+]
